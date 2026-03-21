@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Activity Tracker - Professional Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --sidebar: #1e293b;
+            --card: #ffffff;
+            --accent: #3b82f6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        .glass-effect {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar {
+            background-color: var(--sidebar);
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .card {
+            background-color: var(--card);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-accent {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .priority-high {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .priority-medium {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .priority-low {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .status-pending {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        .status-in-progress {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .status-completed {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hover-scale {
+            transition: transform 0.2s ease;
+        }
+
+        .hover-scale:hover {
+            transform: scale(1.02);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: var(--sidebar);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="min-h-screen flex items-center justify-center">
+            <div class="card p-8 w-full max-w-md">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-tasks text-2xl text-sidebar"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold mb-2">TaskTracker Pro</h1>
+                    <p class="text-gray-400">Professional Task Management</p>
+                </div>
+
+                <form id="loginForm" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="email" id="email" value="admin@tasktracker.com" required
+                                   class="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg text-black placeholder-gray-400 focus:outline-none focus:border-accent">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Password</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="password" id="password" value="admin123" required
+                                   class="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg text-black placeholder-gray-400 focus:outline-none focus:border-accent">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 btn-primary rounded-lg font-medium hover:opacity-90 transition">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center text-sm text-gray-400">
+                    Demo: admin@tasktracker.com / admin123
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboardScreen" class="hidden min-h-screen flex">
+            <!-- Sidebar -->
+            <div class="sidebar w-64 flex flex-col">
+                <div class="p-6 border-b border-gray-300">
+                    <h1 class="text-2xl font-bold text-accent">TaskTracker</h1>
+                    <p class="text-gray-400 text-sm mt-1">Professional Task Management</p>
+                </div>
+                
+                <nav class="flex-1 p-4">
+                    <div class="space-y-2">
+                        <button onclick="showPage('dashboard')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-black transition">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </button>
+                        <button onclick="showPage('today')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-black transition">
+                            <i class="fas fa-tasks"></i>
+                            <span>Today's Tasks</span>
+                        </button>
+                        <button onclick="showPage('completed')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-black transition">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Completed Tasks</span>
+                        </button>
+                        <button onclick="showPage('history')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-black transition">
+                            <i class="fas fa-history"></i>
+                            <span>History</span>
+                        </button>
+                        <button onclick="showPage('analytics')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-black transition">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Analytics</span>
+                        </button>
+                        <button onclick="showPage('settings')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-black transition">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </button>
+                    </div>
+                </nav>
+                
+                <div class="p-4 border-t border-gray-300">
+                    <button onclick="logout()" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-black transition">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col">
+                <!-- Header -->
+                <header class="card px-6 py-4 m-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4 flex-1">
+                            <div class="relative flex-1 max-w-md">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" placeholder="Search tasks..." 
+                                       class="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-black placeholder-gray-400 focus:outline-none focus:border-accent">
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center space-x-2 text-gray-400">
+                                <i class="fas fa-calendar"></i>
+                                <span class="text-sm" id="currentDate"></span>
+                            </div>
+                            
+                            <button class="relative p-2 text-gray-400 hover:text-black transition">
+                                <i class="fas fa-bell"></i>
+                                <span class="absolute top-1 right-1 w-2 h-2 bg-danger rounded-full"></span>
+                            </button>
+                            
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-sidebar"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium" id="userName">Admin User</p>
+                                    <p class="text-xs text-gray-400" id="userEmail">admin@tasktracker.com</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Page Content -->
+                <main class="flex-1 overflow-auto p-6 custom-scrollbar">
+                    <!-- Dashboard Page -->
+                    <div id="dashboardPage" class="page">
+                        <div class="space-y-6">
+                            <div>
+                                <h1 class="text-3xl font-bold mb-2">Dashboard</h1>
+                                <p class="text-gray-400">Welcome back! Here's your task overview.</p>
+                            </div>
+
+                            <!-- Stats Cards -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div class="card p-6 hover-scale">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-tasks text-accent"></i>
+                                        </div>
+                                    </div>
+                                    <h3 class="text-2xl font-bold" id="totalTasks">0</h3>
+                                    <p class="text-gray-400 text-sm">Total Tasks</p>
+                                </div>
+                                <div class="card p-6 hover-scale">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-12 h-12 bg-success/20 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
+                                    </div>
+                                    <h3 class="text-2xl font-bold" id="completedTasks">0</h3>
+                                    <p class="text-gray-400 text-sm">Completed Today</p>
+                                </div>
+                                <div class="card p-6 hover-scale">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-12 h-12 bg-warning/20 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-clock text-warning"></i>
+                                        </div>
+                                    </div>
+                                    <h3 class="text-2xl font-bold" id="pendingTasks">0</h3>
+                                    <p class="text-gray-400 text-sm">Pending Tasks</p>
+                                </div>
+                                <div class="card p-6 hover-scale">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-chart-line text-accent"></i>
+                                        </div>
+                                    </div>
+                                    <h3 class="text-2xl font-bold" id="productivity">0%</h3>
+                                    <p class="text-gray-400 text-sm">Productivity</p>
+                                </div>
+                            </div>
+
+                            <!-- Quick Add Task -->
+                            <div class="card p-4">
+                                <form id="quickAddForm" class="flex items-center space-x-4">
+                                    <input type="text" id="quickTaskTitle" placeholder="Task Title" required
+                                           class="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg text-black placeholder-gray-400 focus:outline-none focus:border-accent">
+                                    
+                                    <select id="quickTaskPriority" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-black focus:outline-none focus:border-accent">
+                                        <option value="Low">Low Priority</option>
+                                        <option value="Medium" selected>Medium Priority</option>
+                                        <option value="High">High Priority</option>
+                                    </select>
+                                    
+                                    <button type="submit" class="px-4 py-2 btn-primary rounded-lg hover:opacity-90 transition flex items-center space-x-2">
+                                        <i class="fas fa-plus"></i>
+                                        <span>Add Task</span>
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Recent Tasks -->
+                            <div>
+                                <h2 class="text-xl font-bold mb-4">Recent Tasks</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="recentTasks">
+                                    <div class="col-span-full text-center py-8 text-gray-400">
+                                        <i class="fas fa-tasks text-4xl mb-4"></i>
+                                        <h3 class="text-lg font-medium mb-2">No tasks yet</h3>
+                                        <p>Create your first task above!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other Pages (placeholder) -->
+                    <div id="todayPage" class="page hidden">
+                        <div class="space-y-6">
+                            <h1 class="text-3xl font-bold mb-2">Today's Tasks</h1>
+                            <p class="text-gray-400">Manage and track your daily tasks.</p>
+                            <div id="todayTasks" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                        </div>
+                    </div>
+
+                    <div id="completedPage" class="page hidden">
+                        <div class="space-y-6">
+                            <h1 class="text-3xl font-bold mb-2">Completed Tasks</h1>
+                            <p class="text-gray-400">Review your completed tasks for today.</p>
+                            <div id="completedTasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                        </div>
+                    </div>
+
+                    <div id="historyPage" class="page hidden">
+                        <div class="space-y-6">
+                            <h1 class="text-3xl font-bold mb-2">Task History</h1>
+                            <p class="text-gray-400">View and analyze your task history.</p>
+                            <div class="card p-4">
+                                <input type="date" id="historyDate" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-black focus:outline-none focus:border-accent">
+                            </div>
+                            <div id="historyTasks" class="space-y-4"></div>
+                        </div>
+                    </div>
+
+                    <div id="analyticsPage" class="page hidden">
+                        <div class="space-y-6">
+                            <h1 class="text-3xl font-bold mb-2">Analytics</h1>
+                            <p class="text-gray-400">Track your productivity and task completion patterns.</p>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div class="card p-6">
+                                    <h2 class="text-xl font-bold mb-4">Weekly Activity</h2>
+                                    <canvas id="weeklyChart"></canvas>
+                                </div>
+                                <div class="card p-6">
+                                    <h2 class="text-xl font-bold mb-4">Status Distribution</h2>
+                                    <canvas id="statusChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="settingsPage" class="page hidden">
+                        <div class="space-y-6">
+                            <h1 class="text-3xl font-bold mb-2">Settings</h1>
+                            <p class="text-gray-400">Manage your account settings and preferences.</p>
+                            <div class="card p-6">
+                                <h2 class="text-xl font-bold mb-4">Profile Settings</h2>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Name</label>
+                                        <input type="text" value="Admin User" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-black focus:outline-none focus:border-accent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Email</label>
+                                        <input type="email" value="admin@tasktracker.com" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-black focus:outline-none focus:border-accent">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let tasks = [];
+        let currentPage = 'dashboard';
+
+        // API base URL
+        const API_BASE = 'http://localhost:5000/api';
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentDate();
+            checkAuth();
+        });
+
+        // Update current date
+        function updateCurrentDate() {
+            const date = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = date.toLocaleDateString('en-US', options);
+        }
+
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (token && user) {
+                currentUser = JSON.parse(user);
+                showDashboard();
+            } else {
+                showLogin();
+            }
+        }
+
+        // Show login screen
+        function showLogin() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('dashboardScreen').classList.add('hidden');
+        }
+
+        // Show dashboard
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboardScreen').classList.remove('hidden');
+            
+            if (currentUser) {
+                document.getElementById('userName').textContent = currentUser.name;
+                document.getElementById('userEmail').textContent = currentUser.email;
+            }
+            
+            loadTasks();
+            updateStats();
+        }
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentUser = data.user;
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    showDashboard();
+                } else {
+                    alert('Login failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Connection error. Please check your backend.');
+            }
+        });
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            currentUser = null;
+            showLogin();
+        }
+
+        // Show page
+        function showPage(page) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            
+            // Show selected page
+            document.getElementById(page + 'Page').classList.remove('hidden');
+            
+            // Update nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-accent', 'text-sidebar');
+                btn.classList.add('text-gray-400');
+            });
+            
+            event.target.closest('.nav-btn').classList.remove('text-gray-400');
+            event.target.closest('.nav-btn').classList.add('bg-accent', 'text-sidebar');
+            
+            currentPage = page;
+            
+            // Load page-specific data
+            if (page === 'today') {
+                loadTodayTasks();
+            } else if (page === 'completed') {
+                loadCompletedTasks();
+            } else if (page === 'analytics') {
+                loadAnalytics();
+            }
+        }
+
+        // Load tasks
+        async function loadTasks() {
+            try {
+                const response = await fetch(`${API_BASE}/tasks?user_id=${currentUser.id}`);
+                const data = await response.json();
+                tasks = data;
+                renderRecentTasks();
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+            }
+        }
+
+        // Render recent tasks
+        function renderRecentTasks() {
+            const container = document.getElementById('recentTasks');
+            const recentTasks = tasks.slice(0, 5);
+            
+            if (recentTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8 text-gray-400">
+                        <i class="fas fa-tasks text-4xl mb-4"></i>
+                        <h3 class="text-lg font-medium mb-2">No tasks yet</h3>
+                        <p>Create your first task above!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = recentTasks.map(task => createTaskCard(task)).join('');
+        }
+
+        // Create task card HTML
+        function createTaskCard(task) {
+            const priorityClass = `priority-${task.priority.toLowerCase()}`;
+            const statusClass = `status-${task.status.toLowerCase().replace(' ', '-')}`;
+            const time = new Date(task.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            
+            return `
+                <div class="card p-4 fade-in">
+                    <div class="flex items-start justify-between mb-3">
+                        <h3 class="font-medium flex-1">${task.title}</h3>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-1 text-xs text-white rounded ${priorityClass}">${task.priority}</span>
+                            <span class="px-2 py-1 text-xs text-white rounded ${statusClass}">${task.status}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2 text-gray-400 text-sm">
+                            <i class="fas fa-clock"></i>
+                            <span>${time}</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            ${getTaskActions(task)}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Get task actions
+        function getTaskActions(task) {
+            let actions = '';
+            
+            if (task.status === 'Pending') {
+                actions = `
+                    <button onclick="updateTaskStatus(${task.id}, 'In Progress')" class="p-2 btn-accent text-sidebar rounded hover:opacity-90" title="Start">
+                        <i class="fas fa-play text-xs"></i>
+                    </button>
+                    <button onclick="updateTaskStatus(${task.id}, 'Completed')" class="p-2 btn-success rounded hover:opacity-90" title="Complete">
+                        <i class="fas fa-check text-xs"></i>
+                    </button>
+                `;
+            } else if (task.status === 'In Progress') {
+                actions = `
+                    <button onclick="updateTaskStatus(${task.id}, 'Completed')" class="p-2 btn-success rounded hover:opacity-90" title="Complete">
+                        <i class="fas fa-check text-xs"></i>
+                    </button>
+                    <button onclick="updateTaskStatus(${task.id}, 'Pending')" class="p-2 btn-warning text-sidebar rounded hover:opacity-90" title="Cancel">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                `;
+            } else if (task.status === 'Completed') {
+                actions = `
+                    <button onclick="updateTaskStatus(${task.id}, 'Pending')" class="p-2 bg-gray-600 text-white rounded hover:opacity-90" title="Reopen">
+                        <i class="fas fa-undo text-xs"></i>
+                    </button>
+                `;
+            }
+            
+            actions += `
+                <button onclick="deleteTask(${task.id})" class="p-2 btn-danger rounded hover:opacity-90" title="Delete">
+                    <i class="fas fa-trash text-xs"></i>
+                </button>
+            `;
+            
+            return actions;
+        }
+
+        // Quick add task
+        document.getElementById('quickAddForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('quickTaskTitle').value.trim();
+            const priority = document.getElementById('quickTaskPriority').value;
+            
+            if (!title) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/tasks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title, priority, user_id: currentUser.id }),
+                });
+                
+                if (response.ok) {
+                    document.getElementById('quickTaskTitle').value = '';
+                    document.getElementById('quickTaskPriority').value = 'Medium';
+                    loadTasks();
+                    updateStats();
+                } else {
+                    alert('Error creating task');
+                }
+            } catch (error) {
+                console.error('Error adding task:', error);
+            }
+        });
+
+        // Update task status
+        async function updateTaskStatus(taskId, status) {
+            try {
+                const response = await fetch(`${API_BASE}/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status }),
+                });
+                
+                if (response.ok) {
+                    loadTasks();
+                    updateStats();
+                } else {
+                    alert('Error updating task');
+                }
+            } catch (error) {
+                console.error('Error updating task:', error);
+            }
+        }
+
+        // Delete task
+        async function deleteTask(taskId) {
+            if (!confirm('Are you sure you want to delete this task?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/tasks/${taskId}`, {
+                    method: 'DELETE',
+                });
+                
+                if (response.ok) {
+                    loadTasks();
+                    updateStats();
+                } else {
+                    alert('Error deleting task');
+                }
+            } catch (error) {
+                console.error('Error deleting task:', error);
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.status === 'Completed').length;
+            const pending = tasks.filter(t => t.status === 'Pending').length;
+            const productivity = total > 0 ? Math.round((completed / total) * 100) : 0;
+            
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('pendingTasks').textContent = pending;
+            document.getElementById('productivity').textContent = productivity + '%';
+        }
+
+        // Load today's tasks
+        function loadTodayTasks() {
+            const activeTasks = tasks.filter(t => t.status !== 'Completed');
+            const container = document.getElementById('todayTasks');
+            
+            if (activeTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8 text-gray-400">
+                        <i class="fas fa-tasks text-4xl mb-4"></i>
+                        <h3 class="text-lg font-medium mb-2">No active tasks</h3>
+                        <p>Create your first task to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = activeTasks.map(task => createTaskCard(task)).join('');
+        }
+
+        // Load completed tasks
+        function loadCompletedTasks() {
+            const completed = tasks.filter(t => t.status === 'Completed');
+            const container = document.getElementById('completedTasksList');
+            
+            if (completed.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8 text-gray-400">
+                        <i class="fas fa-check-circle text-4xl mb-4"></i>
+                        <h3 class="text-lg font-medium mb-2">No completed tasks</h3>
+                        <p>Complete some tasks to see them here!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = completed.map(task => createTaskCard(task)).join('');
+        }
+
+        // Load analytics
+        async function loadAnalytics() {
+            try {
+                const response = await fetch(`${API_BASE}/analytics?user_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                // Prepare chart data
+                const weekData = prepareWeekData(data.week || {});
+                const statusData = prepareStatusData(data.today || {});
+                
+                // Create charts
+                createWeeklyChart(weekData);
+                createStatusChart(statusData);
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+            }
+        }
+
+        // Prepare week data
+        function prepareWeekData(weekData) {
+            const data = [];
+            const today = new Date();
+            
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                
+                data.push({
+                    day: dayName,
+                    tasks: weekData[dateStr] || 0
+                });
+            }
+            
+            return data;
+        }
+
+        // Prepare status data
+        function prepareStatusData(todayData) {
+            return [
+                { name: 'Pending', value: todayData['Pending'] || 0, color: '#facc15' },
+                { name: 'In Progress', value: todayData['In Progress'] || 0, color: '#38bdf8' },
+                { name: 'Completed', value: todayData['Completed'] || 0, color: '#22c55e' }
+            ];
+        }
+
+        // Create weekly chart
+        function createWeeklyChart(data) {
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.day),
+                    datasets: [{
+                        label: 'Tasks',
+                        data: data.map(d => d.tasks),
+                        backgroundColor: '#38bdf8',
+                        borderColor: '#38bdf8',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#f1f5f9'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#94a3b8'
+                            },
+                            grid: {
+                                color: '#374151'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#94a3b8'
+                            },
+                            grid: {
+                                color: '#374151'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create status chart
+        function createStatusChart(data) {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.map(d => d.name),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        backgroundColor: data.map(d => d.color),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#f1f5f9'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
