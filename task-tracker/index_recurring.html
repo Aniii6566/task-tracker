@@ -717,12 +717,8 @@
         const API_BASE = getApiBase();
 
         function getApiBase() {
-            // For production, use the same host
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                return 'http://localhost:5000/api';
-            } else {
-                return `https://${window.location.hostname}/api`;
-            }
+            // For production deployment on Render
+            return 'https://task-tracker-vr1u.onrender.com/api';
         }
 
         // Initialize app
