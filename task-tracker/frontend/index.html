@@ -96,8 +96,12 @@
                     <div class="container">
                         <!-- Dashboard Content -->
                         <div id="dashboardContent" class="fade-in">
-                            <h1 class="text-3xl font-bold mb-8">Dashboard</h1>
+                            <!-- Header -->
+                            <div class="dashboard-header">
+                                <h1 class="dashboard-title">Dashboard</h1>
+                            </div>
                             
+                            <!-- Metrics Grid -->
                             <div class="metrics-grid">
                                 <div class="metric-card">
                                     <div class="metric-header">
@@ -138,20 +142,22 @@
 
                             <!-- Quick Add Task -->
                             <div class="card">
-                                <h3 class="text-xl font-bold mb-4">Quick Add Task</h3>
-                                <form id="quickAddForm" class="flex gap-4">
-                                    <input type="text" id="quickTaskTitle" placeholder="Enter task title..." 
-                                           class="form-input flex-1">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-plus mr-2"></i>Add Task
-                                    </button>
+                                <h3 class="card-title">Quick Add Task</h3>
+                                <form id="quickAddForm" class="quick-add-form">
+                                    <div class="input-group">
+                                        <input type="text" id="quickTaskTitle" placeholder="Enter task title..." 
+                                               class="task-input">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-plus mr-2"></i>Add Task
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
 
                             <!-- Recent Tasks -->
                             <div class="card">
-                                <h3 class="text-xl font-bold mb-4">Recent Tasks</h3>
-                                <div id="recentTasks" class="space-y-4">
+                                <h3 class="card-title">Recent Tasks</h3>
+                                <div id="recentTasks" class="tasks-list">
                                     <p class="text-gray-500 text-center">No tasks yet. Add your first task above!</p>
                                 </div>
                             </div>
@@ -159,15 +165,15 @@
 
                         <!-- Tasks Content -->
                         <div id="tasksContent" class="hidden fade-in">
-                            <div class="flex justify-between items-center mb-8">
-                                <h1 class="text-3xl font-bold">Tasks</h1>
+                            <div class="page-header">
+                                <h1 class="page-title">Tasks</h1>
                                 <button onclick="showAddTaskModal()" class="btn btn-primary">
                                     <i class="fas fa-plus mr-2"></i>Add Task
                                 </button>
                             </div>
 
                             <div class="card">
-                                <div id="tasksList" class="space-y-4">
+                                <div id="tasksList" class="tasks-list">
                                     <p class="text-gray-500 text-center">No tasks found.</p>
                                 </div>
                             </div>
@@ -175,16 +181,18 @@
 
                         <!-- Analytics Content -->
                         <div id="analyticsContent" class="hidden fade-in">
-                            <h1 class="text-3xl font-bold mb-8">Analytics</h1>
+                            <div class="page-header">
+                                <h1 class="page-title">Analytics</h1>
+                            </div>
                             
                             <div class="grid grid-cols-2">
                                 <div class="card">
-                                    <h3 class="text-xl font-bold mb-4">Task Status</h3>
+                                    <h3 class="card-title">Task Status</h3>
                                     <canvas id="statusChart"></canvas>
                                 </div>
                                 
                                 <div class="card">
-                                    <h3 class="text-xl font-bold mb-4">Weekly Progress</h3>
+                                    <h3 class="card-title">Weekly Progress</h3>
                                     <canvas id="weeklyChart"></canvas>
                                 </div>
                             </div>
@@ -192,10 +200,12 @@
 
                         <!-- Settings Content -->
                         <div id="settingsContent" class="hidden fade-in">
-                            <h1 class="text-3xl font-bold mb-8">Settings</h1>
+                            <div class="page-header">
+                                <h1 class="page-title">Settings</h1>
+                            </div>
                             
                             <div class="card max-w-lg">
-                                <h3 class="text-xl font-bold mb-4">Profile</h3>
+                                <h3 class="card-title">Profile</h3>
                                 <form id="profileForm" class="space-y-6">
                                     <div class="form-group">
                                         <label class="form-label">Name</label>

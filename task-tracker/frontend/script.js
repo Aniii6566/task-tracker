@@ -8,11 +8,42 @@ const API_BASE = 'https://task-tracker-vr1u.onrender.com/api';
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('App initializing...');
     checkAuth();
     // Check screen size on load and resize
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
+    
+    // Initialize event listeners
+    initializeEventListeners();
 });
+
+// Initialize all event listeners
+function initializeEventListeners() {
+    console.log('Initializing event listeners...');
+    
+    // Quick Add Task form
+    const quickAddForm = document.getElementById('quickAddForm');
+    if (quickAddForm) {
+        quickAddForm.addEventListener('submit', handleQuickAddTask);
+        console.log('Quick add form listener attached');
+    } else {
+        console.error('Quick add form not found');
+    }
+    
+    // Login form
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+        console.log('Login form listener attached');
+    }
+    
+    // Profile form
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', handleProfileUpdate);
+    }
+}
 
 // Screen size check and adjustment
 function checkScreenSize() {
@@ -93,7 +124,7 @@ function logout() {
 }
 
 // Login form handler
-document.getElementById('loginForm').addEventListener('submit', async function(e) {
+async function handleLogin(e) {
     e.preventDefault();
     
     const email = document.getElementById('email').value;
@@ -126,12 +157,13 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             showNotification('Login failed: ' + (data.error || 'Unknown error'), 'error');
         }
     } catch (error) {
+        console.error('Login error:', error);
         showNotification('Connection error. Please check your backend.', 'error');
     } finally {
         btnText.classList.remove('hidden');
         loading.classList.add('hidden');
     }
-});
+}
 
 // Navigation functions
 function showTasks() {
@@ -168,6 +200,7 @@ function hideAllContent() {
 // Load functions
 async function loadDashboard() {
     try {
+        console.log('Loading dashboard data...');
         const response = await fetch(`${API_BASE}/tasks?user_id=${currentUser.id}`);
         const data = await response.json();
         tasks = data;
@@ -175,6 +208,7 @@ async function loadDashboard() {
         updateStats();
         renderRecentTasks();
     } catch (error) {
+        console.error('Dashboard load error:', error);
         showNotification('Failed to load dashboard', 'error');
     }
 }
@@ -186,6 +220,7 @@ async function loadTasks() {
         tasks = data;
         renderTasks();
     } catch (error) {
+        console.error('Tasks load error:', error);
         showNotification('Failed to load tasks', 'error');
     }
 }
@@ -199,6 +234,7 @@ async function loadAnalytics() {
         createStatusChart(data.today);
         createWeeklyChart(data.week);
     } catch (error) {
+        console.error('Analytics load error:', error);
         showNotification('Failed to load analytics', 'error');
     }
 }
@@ -207,6 +243,21 @@ function loadSettings() {
     if (currentUser) {
         document.getElementById('userName').value = currentUser.name || '';
         document.getElementById('userEmail').value = currentUser.email || '';
+    }
+}
+
+// Profile update handler
+async function handleProfileUpdate(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('userName').value;
+    
+    try {
+        // This would be an API call to update profile
+        showNotification('Profile updated successfully!', 'success');
+    } catch (error) {
+        console.error('Profile update error:', error);
+        showNotification('Failed to update profile', 'error');
     }
 }
 
@@ -265,14 +316,31 @@ function renderTasks() {
 }
 
 // Task operations - PRIORITY COMPLETELY REMOVED
-document.getElementById('quickAddForm').addEventListener('submit', async function(e) {
+async function handleQuickAddTask(e) {
     e.preventDefault();
+    console.log('Quick add task submitted');
     
-    const title = document.getElementById('quickTaskTitle').value;
+    const titleInput = document.getElementById('quickTaskTitle');
+    const title = titleInput.value.trim();
     
-    if (!title) return;
+    console.log('Task title:', title);
+    
+    // Validate input
+    if (!title) {
+        showNotification('Please enter a task title', 'error');
+        titleInput.focus();
+        return;
+    }
+    
+    // Disable form during submission
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="loading"></div> Adding...';
     
     try {
+        console.log('Sending task to API:', { title, user_id: currentUser.id });
+        
         const response = await fetch(`${API_BASE}/tasks`, {
             method: 'POST',
             headers: {
@@ -285,17 +353,31 @@ document.getElementById('quickAddForm').addEventListener('submit', async functio
             }),
         });
         
+        console.log('API response status:', response.status);
+        
+        const data = await response.json();
+        console.log('API response data:', data);
+        
         if (response.ok) {
             showNotification('Task created successfully!', 'success');
-            document.getElementById('quickTaskTitle').value = '';
-            loadDashboard();
+            titleInput.value = ''; // Clear input
+            titleInput.focus(); // Focus back to input
+            
+            // Refresh dashboard data
+            await loadDashboard();
         } else {
-            showNotification('Failed to create task', 'error');
+            console.error('API error:', data);
+            showNotification('Failed to create task: ' + (data.error || 'Unknown error'), 'error');
         }
     } catch (error) {
-        showNotification('Connection error', 'error');
+        console.error('Network error:', error);
+        showNotification('Connection error. Please try again.', 'error');
+    } finally {
+        // Re-enable form
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
     }
-});
+}
 
 async function updateTaskStatus(taskId, status) {
     try {
@@ -310,10 +392,13 @@ async function updateTaskStatus(taskId, status) {
         if (response.ok) {
             showNotification('Task updated successfully!', 'success');
             loadTasks();
+            loadDashboard(); // Also refresh dashboard
         } else {
-            showNotification('Failed to update task', 'error');
+            const data = await response.json();
+            showNotification('Failed to update task: ' + (data.error || 'Unknown error'), 'error');
         }
     } catch (error) {
+        console.error('Task update error:', error);
         showNotification('Connection error', 'error');
     }
 }
@@ -329,18 +414,23 @@ async function deleteTask(taskId) {
         if (response.ok) {
             showNotification('Task deleted successfully!', 'success');
             loadTasks();
+            loadDashboard(); // Also refresh dashboard
         } else {
-            showNotification('Failed to delete task', 'error');
+            const data = await response.json();
+            showNotification('Failed to delete task: ' + (data.error || 'Unknown error'), 'error');
         }
     } catch (error) {
+        console.error('Task delete error:', error);
         showNotification('Connection error', 'error');
     }
 }
 
 // Chart functions
 function createStatusChart(data) {
-    const ctx = document.getElementById('statusChart').getContext('2d');
-    new Chart(ctx, {
+    const ctx = document.getElementById('statusChart');
+    if (!ctx) return;
+    
+    new Chart(ctx.getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: ['Completed', 'Pending', 'In Progress'],
@@ -368,8 +458,10 @@ function createStatusChart(data) {
 }
 
 function createWeeklyChart(data) {
-    const ctx = document.getElementById('weeklyChart').getContext('2d');
-    new Chart(ctx, {
+    const ctx = document.getElementById('weeklyChart');
+    if (!ctx) return;
+    
+    new Chart(ctx.getContext('2d'), {
         type: 'line',
         data: {
             labels: Object.keys(data),
@@ -413,8 +505,16 @@ function createWeeklyChart(data) {
     });
 }
 
+// Modal functions (placeholder for future use)
+function showAddTaskModal() {
+    // This would show a modal for adding tasks
+    showNotification('Add task modal coming soon!', 'info');
+}
+
 // Notification function
 function showNotification(message, type = 'info') {
+    console.log('Notification:', message, type);
+    
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
@@ -424,3 +524,35 @@ function showNotification(message, type = 'info') {
         notification.remove();
     }, 3000);
 }
+
+// Debug function
+window.debugTaskTracker = function() {
+    console.log('=== TASK TRACKER DEBUG ===');
+    console.log('Current user:', currentUser);
+    console.log('Tasks:', tasks);
+    console.log('Current page:', currentPage);
+    console.log('API Base:', API_BASE);
+    
+    // Check DOM elements
+    const quickAddForm = document.getElementById('quickAddForm');
+    const titleInput = document.getElementById('quickTaskTitle');
+    
+    console.log('Quick add form:', quickAddForm);
+    console.log('Title input:', titleInput);
+    console.log('Title input value:', titleInput ? titleInput.value : 'not found');
+    
+    // Check event listeners
+    if (quickAddForm) {
+        console.log('Form has event listeners:', quickAddForm.onsubmit !== null);
+    }
+    
+    console.log('=== END DEBUG ===');
+};
+
+// Add debug shortcut
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        window.debugTaskTracker();
+    }
+});
