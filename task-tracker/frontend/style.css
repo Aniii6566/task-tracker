@@ -61,6 +61,7 @@ html {
     padding: 1rem;
     background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
     position: relative;
+    z-index: 1;
 }
 
 .auth-screen {
@@ -70,12 +71,14 @@ html {
     opacity: 0;
     transform: translateX(20px);
     position: absolute;
+    pointer-events: none;
 }
 
 .auth-screen.active {
     opacity: 1;
     transform: translateX(0);
     position: relative;
+    pointer-events: auto;
 }
 
 .auth-card {
@@ -85,6 +88,8 @@ html {
     padding: 2rem;
     border: 1px solid var(--border-color);
     transition: all 0.3s ease;
+    position: relative;
+    z-index: 10;
 }
 
 @media (max-width: 480px) {
@@ -116,6 +121,7 @@ html {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    pointer-events: auto;
 }
 
 .link-btn:hover {
@@ -188,6 +194,7 @@ html {
     text-align: left;
     width: 100%;
     gap: 0.75rem;
+    pointer-events: auto;
 }
 
 .nav-btn:hover {
@@ -287,6 +294,7 @@ html {
     font-size: 1.25rem;
     box-shadow: var(--shadow-md);
     transition: all 0.2s ease;
+    pointer-events: auto;
 }
 
 .mobile-menu-btn:hover {
@@ -315,6 +323,7 @@ html {
     z-index: 45;
     opacity: 0;
     transition: opacity 0.3s ease;
+    pointer-events: auto;
 }
 
 .sidebar-overlay.show {
@@ -471,6 +480,7 @@ html {
     text-overflow: ellipsis;
     gap: 0.5rem;
     box-shadow: var(--shadow-sm);
+    pointer-events: auto;
 }
 
 .btn:hover {
@@ -486,6 +496,7 @@ html {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+    pointer-events: none;
 }
 
 .btn:disabled:hover {
@@ -604,6 +615,8 @@ html {
     transition: all 0.2s ease, box-shadow 0.2s ease;
     background-color: var(--input);
     color: var(--text-primary);
+    pointer-events: auto;
+    z-index: 10;
 }
 
 .form-input:focus {
@@ -624,6 +637,7 @@ html {
 .form-input:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    pointer-events: none;
 }
 
 @media (max-width: 768px) {
@@ -644,10 +658,12 @@ html {
 /* ===== INPUT WITH ICONS ===== */
 .input-with-icon {
     position: relative;
+    z-index: 5;
 }
 
 .input-with-icon .form-input {
     padding-left: 2.5rem;
+    pointer-events: auto;
 }
 
 .input-with-icon .input-icon {
@@ -657,7 +673,7 @@ html {
     transform: translateY(-50%);
     color: var(--text-muted);
     font-size: 0.875rem;
-    z-index: 1;
+    z-index: 6;
     pointer-events: none;
 }
 
@@ -712,6 +728,7 @@ html {
     color: var(--text-primary);
     transition: all 0.2s ease;
     min-height: 44px;
+    pointer-events: auto;
 }
 
 .task-input:focus {
@@ -1252,6 +1269,18 @@ html {
 
 .bottom-0 {
     bottom: 0;
+}
+
+.z-1 {
+    z-index: 1;
+}
+
+.z-5 {
+    z-index: 5;
+}
+
+.z-6 {
+    z-index: 6;
 }
 
 .z-10 {

@@ -6,7 +6,7 @@ let currentPage = 'dashboard';
 // API Configuration (fallback to localStorage if backend not available)
 const API_BASE = 'https://task-tracker-vr1u.onrender.com/api';
 
-// Initialize app
+// Initialize app - CRITICAL: Wrap everything in DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('App initializing...');
     initializeAuthSystem();
@@ -98,13 +98,14 @@ function hideAllErrors() {
     });
 }
 
-// Login handler
+// Login handler - CRITICAL: Fix form handling
 async function handleLogin(e) {
-    e.preventDefault();
+    e.preventDefault(); // CRITICAL: Prevent default form submission
     console.log('Login form submitted');
     
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
+    // CRITICAL: Get inputs by correct IDs
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
     
     console.log('Login attempt:', { username, password: '***' });
     
@@ -163,11 +164,12 @@ async function handleLogin(e) {
     }, 1000);
 }
 
-// Signup handler
+// Signup handler - CRITICAL: Fix form handling
 async function handleSignup(e) {
-    e.preventDefault();
+    e.preventDefault(); // CRITICAL: Prevent default form submission
     console.log('Signup form submitted');
     
+    // CRITICAL: Get inputs by correct IDs
     const username = document.getElementById('signupUsername').value.trim();
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('signupConfirmPassword').value;
@@ -243,11 +245,12 @@ async function handleSignup(e) {
     }, 1000);
 }
 
-// Forgot password handler
+// Forgot password handler - CRITICAL: Fix form handling
 async function handleForgotPassword(e) {
-    e.preventDefault();
+    e.preventDefault(); // CRITICAL: Prevent default form submission
     console.log('Forgot password form submitted');
     
+    // CRITICAL: Get inputs by correct IDs
     const username = document.getElementById('forgotUsername').value.trim();
     const newPassword = document.getElementById('forgotNewPassword').value;
     const confirmPassword = document.getElementById('forgotConfirmPassword').value;
@@ -836,7 +839,7 @@ async function handleProfileUpdate(e) {
     }
     
     if (newUsername === currentUsername) {
-        showNotification('New username is the same as current username', 'error');
+        showNotification('New username is same as current username', 'error');
         return;
     }
     
@@ -1083,11 +1086,11 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Initialize event listeners
+// Initialize event listeners - CRITICAL: Fix button events
 function initializeEventListeners() {
     console.log('Initializing event listeners...');
     
-    // Auth forms
+    // CRITICAL: Auth forms - Use correct IDs
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
@@ -1110,6 +1113,51 @@ function initializeEventListeners() {
         console.log('Forgot password form listener attached');
     } else {
         console.error('Forgot password form not found');
+    }
+    
+    // CRITICAL: Navigation buttons - Use correct IDs
+    const showSignupBtn = document.getElementById('showSignupBtn');
+    if (showSignupBtn) {
+        showSignupBtn.addEventListener('click', function() {
+            console.log('Show signup button clicked');
+            showSignup();
+        });
+        console.log('Show signup button listener attached');
+    } else {
+        console.error('Show signup button not found');
+    }
+    
+    const showForgotBtn = document.getElementById('showForgotBtn');
+    if (showForgotBtn) {
+        showForgotBtn.addEventListener('click', function() {
+            console.log('Show forgot button clicked');
+            showForgotPassword();
+        });
+        console.log('Show forgot button listener attached');
+    } else {
+        console.error('Show forgot button not found');
+    }
+    
+    const showLoginBtn = document.getElementById('showLoginBtn');
+    if (showLoginBtn) {
+        showLoginBtn.addEventListener('click', function() {
+            console.log('Show login button clicked');
+            showLogin();
+        });
+        console.log('Show login button listener attached');
+    } else {
+        console.error('Show login button not found');
+    }
+    
+    const showLoginBtn2 = document.getElementById('showLoginBtn2');
+    if (showLoginBtn2) {
+        showLoginBtn2.addEventListener('click', function() {
+            console.log('Show login button 2 clicked');
+            showLogin();
+        });
+        console.log('Show login button 2 listener attached');
+    } else {
+        console.error('Show login button 2 not found');
     }
     
     // App forms
@@ -1154,11 +1202,38 @@ window.debugTaskTracker = function() {
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
     const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const signupBtn = document.getElementById('signupBtn');
+    const forgotBtn = document.getElementById('forgotBtn');
+    const showSignupBtn = document.getElementById('showSignupBtn');
+    const showForgotBtn = document.getElementById('showForgotBtn');
     
     console.log('DOM elements check:');
     console.log('Login form:', loginForm ? 'found' : 'NOT FOUND');
     console.log('Signup form:', signupForm ? 'found' : 'NOT FOUND');
     console.log('Forgot password form:', forgotPasswordForm ? 'found' : 'NOT FOUND');
+    console.log('Username input:', usernameInput ? 'found' : 'NOT FOUND');
+    console.log('Password input:', passwordInput ? 'found' : 'NOT FOUND');
+    console.log('Login button:', loginBtn ? 'found' : 'NOT FOUND');
+    console.log('Signup button:', signupBtn ? 'found' : 'NOT FOUND');
+    console.log('Forgot button:', forgotBtn ? 'found' : 'NOT FOUND');
+    console.log('Show signup button:', showSignupBtn ? 'found' : 'NOT FOUND');
+    console.log('Show forgot button:', showForgotBtn ? 'found' : 'NOT FOUND');
+    
+    // Test input values
+    if (usernameInput) {
+        console.log('Username input value:', usernameInput.value);
+        console.log('Username input disabled:', usernameInput.disabled);
+        console.log('Username input readonly:', usernameInput.readOnly);
+    }
+    
+    if (passwordInput) {
+        console.log('Password input value:', passwordInput.value);
+        console.log('Password input disabled:', passwordInput.disabled);
+        console.log('Password input readonly:', passwordInput.readOnly);
+    }
     
     console.log('=== END DEBUG ===');
 };
