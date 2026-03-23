@@ -17,6 +17,20 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeEventListeners();
 });
 
+// ===== LAYOUT CONTROLLER FUNCTIONS =====
+
+function showApp() {
+    document.getElementById("authContainer").style.display = "none";
+    document.getElementById("appContainer").style.display = "flex";
+    console.log('Showing app container');
+}
+
+function showAuth() {
+    document.getElementById("authContainer").style.display = "flex";
+    document.getElementById("appContainer").style.display = "none";
+    console.log('Showing auth container');
+}
+
 // ===== AUTHENTICATION SYSTEM =====
 
 // Initialize authentication system
@@ -32,10 +46,12 @@ function initializeAuthSystem() {
         // Initialize tasks structure for this user if needed
         initializeUserTasks(currentUser);
         
+        showApp(); // CRITICAL: Show app container
         showSection('dashboardSection');
         loadDashboard();
     } else {
         console.log('No user logged in, showing login');
+        showAuth(); // CRITICAL: Show auth container
         showSection('loginSection');
     }
     
@@ -125,18 +141,21 @@ function updateActiveNav(sectionId) {
 // Auth screen navigation
 function showLogin() {
     console.log('Showing login screen');
+    showAuth(); // CRITICAL: Show auth container
     showSection('loginSection');
     clearAuthForms();
 }
 
 function showSignup() {
     console.log('Showing signup screen');
+    showAuth(); // CRITICAL: Show auth container
     showSection('signupSection');
     clearAuthForms();
 }
 
 function showForgotPassword() {
     console.log('Showing forgot password screen');
+    showAuth(); // CRITICAL: Show auth container
     showSection('forgotSection');
     clearAuthForms();
 }
@@ -211,6 +230,7 @@ function handleLogin() {
                 
                 // Transition to dashboard
                 setTimeout(() => {
+                    showApp(); // CRITICAL: Show app container
                     showSection('dashboardSection');
                     loadDashboard();
                 }, 1000);
@@ -458,6 +478,7 @@ function closeSidebar() {
 // Show dashboard
 function showDashboard() {
     console.log('Showing dashboard');
+    showApp(); // CRITICAL: Show app container
     showSection('dashboardSection');
     currentPage = 'dashboard';
     closeSidebar();
@@ -474,6 +495,7 @@ function logout() {
         showNotification('Logged out successfully!', 'info');
         
         // Show login screen
+        showAuth(); // CRITICAL: Show auth container
         showLogin();
     }
 }

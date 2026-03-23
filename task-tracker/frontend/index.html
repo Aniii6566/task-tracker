@@ -11,7 +11,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app">
+    <!-- Auth Container -->
+    <div id="authContainer">
         <!-- Mobile Menu Button -->
         <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
             <i class="fas fa-bars"></i>
@@ -19,50 +20,6 @@
 
         <!-- Sidebar Overlay -->
         <div class="sidebar-overlay" onclick="closeSidebar()"></div>
-
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-content">
-                <div class="text-center mb-8">
-                    <div class="w-12 h-12 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-tasks text-white"></i>
-                    </div>
-                    <h2 class="text-lg font-bold text-white">TaskTracker</h2>
-                    <p class="text-sm text-gray-400 mt-1" id="sidebarUsername">Welcome!</p>
-                </div>
-
-                <nav class="sidebar-nav">
-                    <button id="dashboardBtn" class="nav-btn active" data-page="dashboard">
-                        <i class="fas fa-home"></i>
-                        <span>Dashboard</span>
-                    </button>
-                    <button id="tasksBtn" class="nav-btn" data-page="tasks">
-                        <i class="fas fa-tasks"></i>
-                        <span>Today's Tasks</span>
-                    </button>
-                    <button id="completedBtn" class="nav-btn" data-page="completed">
-                        <i class="fas fa-check"></i>
-                        <span>Completed Tasks</span>
-                    </button>
-                    <button id="historyBtn" class="nav-btn" data-page="history">
-                        <i class="fas fa-history"></i>
-                        <span>History</span>
-                    </button>
-                    <button id="analyticsBtn" class="nav-btn" data-page="analytics">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Analytics</span>
-                    </button>
-                    <button id="settingsBtn" class="nav-btn" data-page="settings">
-                        <i class="fas fa-cog"></i>
-                        <span>Settings</span>
-                    </button>
-                    <button id="logoutBtn" class="nav-btn logout-btn">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Logout</span>
-                    </button>
-                </nav>
-            </div>
-        </aside>
 
         <!-- Main Content -->
         <main class="main-content" id="mainContent">
@@ -239,7 +196,57 @@
                     </div>
                 </div>
             </div>
+    </div>
 
+    <!-- App Container -->
+    <div id="appContainer" style="display:none;">
+        <div class="app-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-content">
+                    <div class="text-center mb-8">
+                        <div class="w-12 h-12 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-tasks text-white"></i>
+                        </div>
+                        <h2 class="text-lg font-bold text-white">TaskTracker</h2>
+                        <p class="text-sm text-gray-400 mt-1" id="sidebarUsername">Welcome!</p>
+                    </div>
+
+                    <nav class="sidebar-nav">
+                        <button id="dashboardBtn" class="nav-btn active" data-page="dashboard">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </button>
+                        <button id="tasksBtn" class="nav-btn" data-page="tasks">
+                            <i class="fas fa-tasks"></i>
+                            <span>Today's Tasks</span>
+                        </button>
+                        <button id="completedBtn" class="nav-btn" data-page="completed">
+                            <i class="fas fa-check"></i>
+                            <span>Completed Tasks</span>
+                        </button>
+                        <button id="historyBtn" class="nav-btn" data-page="history">
+                            <i class="fas fa-history"></i>
+                            <span>History</span>
+                        </button>
+                        <button id="analyticsBtn" class="nav-btn" data-page="analytics">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Analytics</span>
+                        </button>
+                        <button id="settingsBtn" class="nav-btn" data-page="settings">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </button>
+                        <button id="logoutBtn" class="nav-btn logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </button>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content" id="mainContent">
             <!-- Dashboard Section -->
             <div id="dashboardSection" class="section" style="display: none;">
                 <div class="container">
@@ -453,6 +460,7 @@
                 </div>
             </div>
         </main>
+        </div>
     </div>
 
     <script src="script.js"></script>
