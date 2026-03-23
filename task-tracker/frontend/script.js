@@ -47,18 +47,21 @@ function initializeAuthSystem() {
 
 // Auth screen navigation
 function showLogin() {
+    console.log('Showing login screen');
     hideAllAuthScreens();
     document.getElementById('loginScreen').classList.add('active');
     clearAuthForms();
 }
 
 function showSignup() {
+    console.log('Showing signup screen');
     hideAllAuthScreens();
     document.getElementById('signupScreen').classList.add('active');
     clearAuthForms();
 }
 
 function showForgotPassword() {
+    console.log('Showing forgot password screen');
     hideAllAuthScreens();
     document.getElementById('forgotPasswordScreen').classList.add('active');
     clearAuthForms();
@@ -98,9 +101,12 @@ function hideAllErrors() {
 // Login handler
 async function handleLogin(e) {
     e.preventDefault();
+    console.log('Login form submitted');
     
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
+    
+    console.log('Login attempt:', { username, password: '***' });
     
     // Validation
     if (!username || !password) {
@@ -129,6 +135,7 @@ async function handleLogin(e) {
                 currentUser = { username: user.username, id: Date.now() };
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 
+                console.log('Login successful for:', user.username);
                 showAuthError('loginError', '', true); // Clear error
                 showNotification('Login successful! Welcome back, ' + user.username, 'success');
                 
@@ -139,6 +146,7 @@ async function handleLogin(e) {
                 
             } else {
                 // Login failed
+                console.log('Login failed: invalid credentials');
                 showAuthError('loginError', 'Invalid username or password');
                 showNotification('Login failed. Please check your credentials.', 'error');
             }
@@ -158,10 +166,13 @@ async function handleLogin(e) {
 // Signup handler
 async function handleSignup(e) {
     e.preventDefault();
+    console.log('Signup form submitted');
     
     const username = document.getElementById('signupUsername').value.trim();
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('signupConfirmPassword').value;
+    
+    console.log('Signup attempt:', { username, password: '***', confirmPassword: '***' });
     
     // Validation
     if (!username || !password || !confirmPassword) {
@@ -201,6 +212,7 @@ async function handleSignup(e) {
             
             // Check if username already exists
             if (users.find(u => u.username === username)) {
+                console.log('Signup failed: username already exists');
                 showAuthError('signupError', 'Username already exists');
                 showNotification('Username already taken. Please choose another.', 'error');
             } else {
@@ -209,6 +221,7 @@ async function handleSignup(e) {
                 users.push(newUser);
                 localStorage.setItem('users', JSON.stringify(users));
                 
+                console.log('Signup successful for:', username);
                 showAuthError('signupError', '', true); // Clear error
                 showNotification('Account created successfully! Please login.', 'success');
                 
@@ -233,10 +246,13 @@ async function handleSignup(e) {
 // Forgot password handler
 async function handleForgotPassword(e) {
     e.preventDefault();
+    console.log('Forgot password form submitted');
     
     const username = document.getElementById('forgotUsername').value.trim();
     const newPassword = document.getElementById('forgotNewPassword').value;
     const confirmPassword = document.getElementById('forgotConfirmPassword').value;
+    
+    console.log('Password reset attempt:', { username, newPassword: '***', confirmPassword: '***' });
     
     // Validation
     if (!username || !newPassword || !confirmPassword) {
@@ -271,6 +287,7 @@ async function handleForgotPassword(e) {
             const userIndex = users.findIndex(u => u.username === username);
             
             if (userIndex === -1) {
+                console.log('Password reset failed: username not found');
                 showAuthError('forgotError', 'Username not found');
                 showNotification('Username not found in our system.', 'error');
             } else {
@@ -278,6 +295,7 @@ async function handleForgotPassword(e) {
                 users[userIndex].password = newPassword;
                 localStorage.setItem('users', JSON.stringify(users));
                 
+                console.log('Password reset successful for:', username);
                 showAuthError('forgotError', '', true); // Clear error
                 showNotification('Password reset successfully! Please login with your new password.', 'success');
                 
@@ -303,6 +321,8 @@ async function handleForgotPassword(e) {
 function showAuthError(errorId, message, clear = false) {
     const errorElement = document.getElementById(errorId);
     const errorText = document.getElementById(errorId + 'Text');
+    
+    console.log('Showing auth error:', { errorId, message, clear });
     
     if (errorElement && errorText) {
         if (clear) {
@@ -366,6 +386,7 @@ function closeSidebar() {
 
 // Show dashboard
 function showDashboard() {
+    console.log('Showing dashboard');
     document.getElementById('authContainer').classList.add('hidden');
     document.getElementById('dashboardScreen').classList.remove('hidden');
     currentPage = 'dashboard';
@@ -797,9 +818,12 @@ async function deleteTask(taskId) {
 // Handle profile update (username change)
 async function handleProfileUpdate(e) {
     e.preventDefault();
+    console.log('Profile update submitted');
     
     const currentUsername = document.getElementById('currentUsername').value;
     const newUsername = document.getElementById('newUsername').value.trim();
+    
+    console.log('Username change attempt:', { currentUsername, newUsername });
     
     if (!newUsername) {
         showNotification('Please enter a new username', 'error');
@@ -834,6 +858,7 @@ async function handleProfileUpdate(e) {
         document.getElementById('currentUsername').value = newUsername;
         document.getElementById('newUsername').value = '';
         
+        console.log('Username updated successfully for:', newUsername);
         showNotification('Username updated successfully!', 'success');
     } catch (error) {
         console.error('Profile update error:', error);
@@ -844,10 +869,17 @@ async function handleProfileUpdate(e) {
 // Handle password update
 async function handlePasswordUpdate(e) {
     e.preventDefault();
+    console.log('Password update submitted');
     
     const oldPassword = document.getElementById('oldPassword').value;
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    console.log('Password change attempt:', { 
+        oldPassword: oldPassword ? '***' : 'empty', 
+        newPassword: newPassword ? '***' : 'empty', 
+        confirmPassword: confirmPassword ? '***' : 'empty' 
+    });
     
     // Validation
     if (!oldPassword || !newPassword || !confirmPassword) {
@@ -871,6 +903,7 @@ async function handlePasswordUpdate(e) {
         const user = users.find(u => u.username === currentUser.username);
         
         if (!user || user.password !== oldPassword) {
+            console.log('Password update failed: old password incorrect');
             showNotification('Old password is incorrect', 'error');
             return;
         }
@@ -887,6 +920,7 @@ async function handlePasswordUpdate(e) {
         document.getElementById('newPassword').value = '';
         document.getElementById('confirmPassword').value = '';
         
+        console.log('Password updated successfully for:', currentUser.username);
         showNotification('Password updated successfully!', 'success');
     } catch (error) {
         console.error('Password update error:', error);
@@ -1058,18 +1092,24 @@ function initializeEventListeners() {
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
         console.log('Login form listener attached');
+    } else {
+        console.error('Login form not found');
     }
     
     const signupForm = document.getElementById('signupForm');
     if (signupForm) {
         signupForm.addEventListener('submit', handleSignup);
         console.log('Signup form listener attached');
+    } else {
+        console.error('Signup form not found');
     }
     
     const forgotPasswordForm = document.getElementById('forgotPasswordForm');
     if (forgotPasswordForm) {
         forgotPasswordForm.addEventListener('submit', handleForgotPassword);
         console.log('Forgot password form listener attached');
+    } else {
+        console.error('Forgot password form not found');
     }
     
     // App forms
@@ -1077,18 +1117,24 @@ function initializeEventListeners() {
     if (quickAddForm) {
         quickAddForm.addEventListener('submit', handleQuickAddTask);
         console.log('Quick add form listener attached');
+    } else {
+        console.error('Quick add form not found');
     }
     
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
         profileForm.addEventListener('submit', handleProfileUpdate);
         console.log('Profile form listener attached');
+    } else {
+        console.error('Profile form not found');
     }
     
     const passwordForm = document.getElementById('passwordForm');
     if (passwordForm) {
         passwordForm.addEventListener('submit', handlePasswordUpdate);
         console.log('Password form listener attached');
+    } else {
+        console.error('Password form not found');
     }
 }
 
@@ -1103,6 +1149,16 @@ window.debugTaskTracker = function() {
     console.log('Users in localStorage:', JSON.parse(localStorage.getItem('users') || '[]'));
     console.log('Tasks in localStorage:', JSON.parse(localStorage.getItem('tasks') || '[]'));
     console.log('Current user in localStorage:', JSON.parse(localStorage.getItem('currentUser') || 'null'));
+    
+    // Check DOM elements
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+    
+    console.log('DOM elements check:');
+    console.log('Login form:', loginForm ? 'found' : 'NOT FOUND');
+    console.log('Signup form:', signupForm ? 'found' : 'NOT FOUND');
+    console.log('Forgot password form:', forgotPasswordForm ? 'found' : 'NOT FOUND');
     
     console.log('=== END DEBUG ===');
 };

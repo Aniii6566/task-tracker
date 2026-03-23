@@ -112,6 +112,10 @@ html {
     padding: 0.5rem;
     border-radius: 8px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .link-btn:hover {
@@ -183,6 +187,7 @@ html {
     font-weight: 500;
     text-align: left;
     width: 100%;
+    gap: 0.75rem;
 }
 
 .nav-btn:hover {
@@ -633,6 +638,48 @@ html {
         padding: 0.5rem 0.75rem;
         font-size: 0.75rem;
         min-height: 44px;
+    }
+}
+
+/* ===== INPUT WITH ICONS ===== */
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon .form-input {
+    padding-left: 2.5rem;
+}
+
+.input-with-icon .input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    z-index: 1;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .input-with-icon .input-icon {
+        font-size: 0.8125rem;
+        left: 0.875rem;
+    }
+    
+    .input-with-icon .form-input {
+        padding-left: 2.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .input-with-icon .input-icon {
+        font-size: 0.75rem;
+        left: 0.75rem;
+    }
+    
+    .input-with-icon .form-input {
+        padding-left: 2rem;
     }
 }
 
