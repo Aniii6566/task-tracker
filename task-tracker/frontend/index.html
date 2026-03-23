@@ -33,7 +33,6 @@
                         <p class="text-gray-400">Professional Task Management</p>
                     </div>
 
-                    <!-- CRITICAL: Remove HTML validation -->
                     <form id="loginForm" class="space-y-6" novalidate>
                         <div class="form-group">
                             <label class="form-label">Username</label>
@@ -58,19 +57,19 @@
                             <span id="loginErrorText">Invalid username or password</span>
                         </div>
 
-                        <!-- CRITICAL: Change to type="button" -->
-                        <button type="button" id="loginBtn" class="btn btn-primary w-full">
+                        <!-- CRITICAL: Fix button click area -->
+                        <button type="button" id="loginBtn" class="btn btn-primary w-full clickable-btn">
                             <span class="btn-text">Sign In</span>
                             <div class="loading hidden"></div>
                         </button>
                     </form>
 
+                    <!-- CRITICAL: Fix button click area -->
                     <div class="auth-links">
-                        <!-- CRITICAL: Change to type="button" -->
-                        <button type="button" id="showSignupBtn" class="link-btn">
+                        <button type="button" id="showSignupBtn" class="link-btn clickable-btn">
                             <i class="fas fa-user-plus mr-2"></i>Create Account
                         </button>
-                        <button type="button" id="showForgotBtn" class="link-btn">
+                        <button type="button" id="showForgotBtn" class="link-btn clickable-btn">
                             <i class="fas fa-key mr-2"></i>Forgot Password?
                         </button>
                     </div>
@@ -88,7 +87,6 @@
                         <p class="text-gray-400">Join TaskTracker Pro</p>
                     </div>
 
-                    <!-- CRITICAL: Remove HTML validation -->
                     <form id="signupForm" class="space-y-6" novalidate>
                         <div class="form-group">
                             <label class="form-label">Username</label>
@@ -122,16 +120,16 @@
                             <span id="signupErrorText">Error creating account</span>
                         </div>
 
-                        <!-- CRITICAL: Change to type="button" -->
-                        <button type="button" id="signupBtn" class="btn btn-primary w-full">
+                        <!-- CRITICAL: Fix button click area -->
+                        <button type="button" id="signupBtn" class="btn btn-primary w-full clickable-btn">
                             <span class="btn-text">Create Account</span>
                             <div class="loading hidden"></div>
                         </button>
                     </form>
 
+                    <!-- CRITICAL: Fix button click area -->
                     <div class="auth-links">
-                        <!-- CRITICAL: Change to type="button" -->
-                        <button type="button" id="showLoginBtn" class="link-btn">
+                        <button type="button" id="showLoginBtn" class="link-btn clickable-btn">
                             <i class="fas fa-sign-in-alt mr-2"></i>Back to Login
                         </button>
                     </div>
@@ -149,7 +147,6 @@
                         <p class="text-gray-400">Enter your username to reset password</p>
                     </div>
 
-                    <!-- CRITICAL: Remove HTML validation -->
                     <form id="forgotPasswordForm" class="space-y-6" novalidate>
                         <div class="form-group">
                             <label class="form-label">Username</label>
@@ -183,16 +180,16 @@
                             <span id="forgotErrorText">Error resetting password</span>
                         </div>
 
-                        <!-- CRITICAL: Change to type="button" -->
-                        <button type="button" id="forgotBtn" class="btn btn-primary w-full">
+                        <!-- CRITICAL: Fix button click area -->
+                        <button type="button" id="forgotBtn" class="btn btn-primary w-full clickable-btn">
                             <span class="btn-text">Reset Password</span>
                             <div class="loading hidden"></div>
                         </button>
                     </form>
 
+                    <!-- CRITICAL: Fix button click area -->
                     <div class="auth-links">
-                        <!-- CRITICAL: Change to type="button" -->
-                        <button type="button" id="showLoginBtn2" class="link-btn">
+                        <button type="button" id="showLoginBtn2" class="link-btn clickable-btn">
                             <i class="fas fa-sign-in-alt mr-2"></i>Back to Login
                         </button>
                     </div>
@@ -215,31 +212,32 @@
                         </div>
 
                         <nav class="sidebar-nav">
-                            <button onclick="showDashboard()" class="nav-btn active" data-page="dashboard">
+                            <!-- CRITICAL: Fix button click area -->
+                            <button onclick="showDashboard()" class="nav-btn active clickable-btn" data-page="dashboard">
                                 <i class="fas fa-home"></i>
                                 <span>Dashboard</span>
                             </button>
-                            <button onclick="showTasks()" class="nav-btn" data-page="tasks">
+                            <button onclick="showTasks()" class="nav-btn clickable-btn" data-page="tasks">
                                 <i class="fas fa-tasks"></i>
                                 <span>Today's Tasks</span>
                             </button>
-                            <button onclick="showCompletedTasks()" class="nav-btn" data-page="completed">
+                            <button onclick="showCompletedTasks()" class="nav-btn clickable-btn" data-page="completed">
                                 <i class="fas fa-check"></i>
                                 <span>Completed Tasks</span>
                             </button>
-                            <button onclick="showHistory()" class="nav-btn" data-page="history">
+                            <button onclick="showHistory()" class="nav-btn clickable-btn" data-page="history">
                                 <i class="fas fa-history"></i>
                                 <span>History</span>
                             </button>
-                            <button onclick="showAnalytics()" class="nav-btn" data-page="analytics">
+                            <button onclick="showAnalytics()" class="nav-btn clickable-btn" data-page="analytics">
                                 <i class="fas fa-chart-bar"></i>
                                 <span>Analytics</span>
                             </button>
-                            <button onclick="showSettings()" class="nav-btn" data-page="settings">
+                            <button onclick="showSettings()" class="nav-btn clickable-btn" data-page="settings">
                                 <i class="fas fa-cog"></i>
                                 <span>Settings</span>
                             </button>
-                            <button onclick="logout()" class="nav-btn logout-btn">
+                            <button onclick="logout()" class="nav-btn logout-btn clickable-btn">
                                 <i class="fas fa-sign-out-alt"></i>
                                 <span>Logout</span>
                             </button>
@@ -303,7 +301,7 @@
                                     <div class="input-group">
                                         <input type="text" id="quickTaskTitle" placeholder="Enter task title..." 
                                                class="task-input">
-                                        <button type="submit" class="btn btn-primary">
+                                        <button type="submit" class="btn btn-primary clickable-btn">
                                             <i class="fas fa-plus"></i>
                                             <span>Add Task</span>
                                         </button>
@@ -324,7 +322,7 @@
                         <div id="tasksContent" class="content-section hidden fade-in">
                             <div class="page-header">
                                 <h1 class="page-title">Today's Tasks</h1>
-                                <button onclick="showAddTaskModal()" class="btn btn-primary">
+                                <button onclick="showAddTaskModal()" class="btn btn-primary clickable-btn">
                                     <i class="fas fa-plus"></i>
                                     <span>Add Task</span>
                                 </button>
@@ -407,7 +405,7 @@
                                             <input type="text" id="newUsername" class="form-input" placeholder="Enter new username">
                                         </div>
                                         
-                                        <button type="submit" class="btn btn-primary">
+                                        <button type="submit" class="btn btn-primary clickable-btn">
                                             <i class="fas fa-save"></i>
                                             <span>Update Username</span>
                                         </button>
@@ -442,7 +440,7 @@
                                             </div>
                                         </div>
                                         
-                                        <button type="submit" class="btn btn-primary">
+                                        <button type="submit" class="btn btn-primary clickable-btn">
                                             <i class="fas fa-key"></i>
                                             <span>Change Password</span>
                                         </button>

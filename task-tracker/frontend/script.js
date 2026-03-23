@@ -438,7 +438,7 @@ function setActiveNav(pageName) {
     }
 }
 
-// Show/hide content sections
+// ===== CRITICAL: SECTION SWITCHING SYSTEM =====
 function showSection(sectionId) {
     console.log('Showing section:', sectionId);
     
@@ -638,10 +638,10 @@ function renderTasks() {
             <div class="task-title">${task.title}</div>
             <div class="task-actions">
                 <span class="badge status-${task.status.toLowerCase().replace(' ', '-')}">${task.status}</span>
-                <button onclick="updateTaskStatus(${task.id}, 'Completed')" class="btn btn-success btn-sm">
+                <button onclick="updateTaskStatus(${task.id}, 'Completed')" class="btn btn-success btn-sm clickable-btn">
                     <i class="fas fa-check"></i>
                 </button>
-                <button onclick="deleteTask(${task.id})" class="btn btn-danger btn-sm">
+                <button onclick="deleteTask(${task.id})" class="btn btn-danger btn-sm clickable-btn">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -663,7 +663,7 @@ function renderCompletedTasks(completedTasks) {
             <div class="task-title">${task.title}</div>
             <div class="task-actions">
                 <span class="badge status-completed">Completed</span>
-                <button onclick="deleteTask(${task.id})" class="btn btn-danger btn-sm">
+                <button onclick="deleteTask(${task.id})" class="btn btn-danger btn-sm clickable-btn">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -1087,7 +1087,7 @@ function showNotification(message, type = 'info') {
 function initializeEventListeners() {
     console.log('Initializing event listeners...');
     
-    // CRITICAL: Login button - Use click event instead of submit
+    // CRITICAL: Auth buttons - Use click events
     const loginBtn = document.getElementById('loginBtn');
     if (loginBtn) {
         loginBtn.addEventListener('click', handleLogin);
@@ -1096,7 +1096,6 @@ function initializeEventListeners() {
         console.error('Login button not found');
     }
     
-    // CRITICAL: Signup button - Use click event instead of submit
     const signupBtn = document.getElementById('signupBtn');
     if (signupBtn) {
         signupBtn.addEventListener('click', handleSignup);
@@ -1105,7 +1104,6 @@ function initializeEventListeners() {
         console.error('Signup button not found');
     }
     
-    // CRITICAL: Forgot password button - Use click event instead of submit
     const forgotBtn = document.getElementById('forgotBtn');
     if (forgotBtn) {
         forgotBtn.addEventListener('click', handleForgotPassword);
