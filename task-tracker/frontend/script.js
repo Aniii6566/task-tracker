@@ -1,6 +1,6 @@
 // Global variables
-let currentUser = null;
-let tasks = [];
+let currentUser = null; // Will store username string
+let tasks = {}; // Will store tasks per user: { username1: [...], username2: [...] }
 let currentPage = 'dashboard';
 
 // API Configuration (fallback to localStorage if backend not available)
@@ -26,8 +26,12 @@ function initializeAuthSystem() {
     // Check if user is already logged in
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        console.log('User already logged in:', currentUser.username);
+        currentUser = savedUser; // Store username string directly
+        console.log('User already logged in:', currentUser);
+        
+        // Initialize tasks structure for this user if needed
+        initializeUserTasks(currentUser);
+        
         showSection('dashboardSection');
         loadDashboard();
     } else {
@@ -44,6 +48,37 @@ function initializeAuthSystem() {
         localStorage.setItem('users', JSON.stringify(defaultUsers));
         console.log('Default users created');
     }
+    
+    // Initialize tasks structure if not exists
+    if (!localStorage.getItem('tasks')) {
+        localStorage.setItem('tasks', JSON.stringify({}));
+        console.log('Tasks structure initialized');
+    }
+}
+
+// Initialize user tasks array if it doesn't exist
+function initializeUserTasks(username) {
+    const allTasks = JSON.parse(localStorage.getItem('tasks') || '{}');
+    if (!allTasks[username]) {
+        allTasks[username] = [];
+        localStorage.setItem('tasks', JSON.stringify(allTasks));
+        console.log('Initialized tasks array for user:', username);
+    }
+}
+
+// Get current user's tasks
+function getCurrentUserTasks() {
+    if (!currentUser) return [];
+    const allTasks = JSON.parse(localStorage.getItem('tasks') || '{}');
+    return allTasks[currentUser] || [];
+}
+
+// Save current user's tasks
+function saveCurrentUserTasks(userTasks) {
+    if (!currentUser) return;
+    const allTasks = JSON.parse(localStorage.getItem('tasks') || '{}');
+    allTasks[currentUser] = userTasks;
+    localStorage.setItem('tasks', JSON.stringify(allTasks));
 }
 
 // ===== CRITICAL: CENTRAL NAVIGATION SYSTEM (MOST IMPORTANT) =====
@@ -164,8 +199,11 @@ function handleLogin() {
             
             if (user) {
                 // Login successful
-                currentUser = { username: user.username, id: Date.now() };
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                currentUser = user.username; // Store username string directly
+                localStorage.setItem('currentUser', currentUser);
+                
+                // Initialize tasks structure for this user
+                initializeUserTasks(currentUser);
                 
                 console.log('Login successful for:', user.username);
                 showAuthError('loginError', '', true); // Clear error
@@ -430,8 +468,8 @@ function showDashboard() {
 // Logout function
 function logout() {
     if (confirm('Are you sure you want to logout?')) {
-        localStorage.removeItem('currentUser');
-        currentUser = null;
+        localStorage.removeItem('currentUser'); // Remove currentUser ONLY
+        currentUser = null; // Keep all users + tasks
         
         showNotification('Logged out successfully!', 'info');
         
@@ -444,7 +482,7 @@ function logout() {
 function updateSidebarUsername() {
     const sidebarUsername = document.getElementById('sidebarUsername');
     if (sidebarUsername && currentUser) {
-        sidebarUsername.textContent = 'Welcome, ' + currentUser.username + '!';
+        sidebarUsername.textContent = 'Welcome, ' + currentUser + '!'; // currentUser is now just a string
     }
 }
 
@@ -496,11 +534,10 @@ function navigateToSettings() {
 // Load dashboard data
 async function loadDashboard() {
     try {
-        console.log('Loading dashboard data...');
+        console.log('Loading dashboard data for user:', currentUser);
         
-        // Load tasks from localStorage (fallback to empty array)
-        const savedTasks = localStorage.getItem('tasks');
-        tasks = savedTasks ? JSON.parse(savedTasks) : [];
+        // Load ONLY currentUser tasks from localStorage
+        tasks = getCurrentUserTasks();
         
         updateStats();
         renderRecentTasks();
@@ -513,10 +550,10 @@ async function loadDashboard() {
 // Load all tasks
 async function loadTasks() {
     try {
-        console.log('Loading tasks...');
+        console.log('Loading tasks for user:', currentUser);
         
-        const savedTasks = localStorage.getItem('tasks');
-        tasks = savedTasks ? JSON.parse(savedTasks) : [];
+        // Load ONLY currentUser tasks
+        tasks = getCurrentUserTasks();
         renderTasks();
     } catch (error) {
         console.error('Tasks load error:', error);
@@ -527,10 +564,10 @@ async function loadTasks() {
 // Load completed tasks
 async function loadCompletedTasks() {
     try {
-        console.log('Loading completed tasks...');
+        console.log('Loading completed tasks for user:', currentUser);
         
-        const savedTasks = localStorage.getItem('tasks');
-        const allTasks = savedTasks ? JSON.parse(savedTasks) : [];
+        // Load ONLY currentUser tasks
+        const allTasks = getCurrentUserTasks();
         const completedTasks = allTasks.filter(task => task.status === 'Completed');
         renderCompletedTasks(completedTasks);
     } catch (error) {
@@ -542,10 +579,10 @@ async function loadCompletedTasks() {
 // Load task history
 async function loadHistory() {
     try {
-        console.log('Loading task history...');
+        console.log('Loading task history for user:', currentUser);
         
-        const savedTasks = localStorage.getItem('tasks');
-        const allTasks = savedTasks ? JSON.parse(savedTasks) : [];
+        // Load ONLY currentUser tasks
+        const allTasks = getCurrentUserTasks();
         renderHistory(allTasks);
     } catch (error) {
         console.error('History load error:', error);
@@ -556,10 +593,10 @@ async function loadHistory() {
 // Load analytics
 async function loadAnalytics() {
     try {
-        console.log('Loading analytics...');
+        console.log('Loading analytics for user:', currentUser);
         
-        const savedTasks = localStorage.getItem('tasks');
-        const allTasks = savedTasks ? JSON.parse(savedTasks) : [];
+        // Load ONLY currentUser tasks
+        const allTasks = getCurrentUserTasks();
         
         // Create charts
         createStatusChart(allTasks);
@@ -572,9 +609,9 @@ async function loadAnalytics() {
 
 // Load settings
 function loadSettings() {
-    console.log('Loading settings...');
+    console.log('Loading settings for user:', currentUser);
     if (currentUser) {
-        document.getElementById('currentUsername').value = currentUser.username || '';
+        document.getElementById('currentUsername').value = currentUser || '';
         document.getElementById('newUsername').value = '';
         document.getElementById('oldPassword').value = '';
         document.getElementById('newPassword').value = '';
@@ -692,7 +729,7 @@ function renderHistory(allTasks) {
 // Handle quick add task
 async function handleQuickAddTask(e) {
     e.preventDefault();
-    console.log('Quick add task submitted');
+    console.log('Quick add task submitted for user:', currentUser);
     
     const titleInput = document.getElementById('quickTaskTitle');
     const title = titleInput.value.trim();
@@ -718,17 +755,21 @@ async function handleQuickAddTask(e) {
             id: Date.now(),
             title: title,
             status: 'Pending',
-            user_id: currentUser ? currentUser.id : 1,
+            user: currentUser, // Store which user owns this task
             created_at: new Date().toISOString()
         };
         
-        // Add to tasks array
-        tasks.push(newTask);
+        // Get current user's tasks and add new task
+        const userTasks = getCurrentUserTasks();
+        userTasks.push(newTask);
         
-        // Save to localStorage
-        localStorage.setItem('tasks', JSON.stringify(tasks));
+        // Save to currentUser's task array
+        saveCurrentUserTasks(userTasks);
         
-        console.log('Task created:', newTask);
+        // Update local tasks variable
+        tasks = userTasks;
+        
+        console.log('Task created for user', currentUser, ':', newTask);
         
         showNotification('Task created successfully!', 'success');
         titleInput.value = ''; // Clear input
@@ -749,13 +790,21 @@ async function handleQuickAddTask(e) {
 // Update task status
 async function updateTaskStatus(taskId, status) {
     try {
+        console.log('Updating task', taskId, 'to', status, 'for user:', currentUser);
+        
+        // Get current user's tasks
+        const userTasks = getCurrentUserTasks();
+        
         // Find task in array
-        const taskIndex = tasks.findIndex(t => t.id === taskId);
+        const taskIndex = userTasks.findIndex(t => t.id === taskId);
         if (taskIndex !== -1) {
-            tasks[taskIndex].status = status;
+            userTasks[taskIndex].status = status;
             
-            // Save to localStorage
-            localStorage.setItem('tasks', JSON.stringify(tasks));
+            // Save to currentUser's task array
+            saveCurrentUserTasks(userTasks);
+            
+            // Update local tasks variable
+            tasks = userTasks;
             
             showNotification('Task updated successfully!', 'success');
             
@@ -767,6 +816,9 @@ async function updateTaskStatus(taskId, status) {
             } else if (currentPage === 'completed') {
                 loadCompletedTasks();
             }
+        } else {
+            console.error('Task not found:', taskId);
+            showNotification('Task not found', 'error');
         }
     } catch (error) {
         console.error('Task update error:', error);
@@ -779,13 +831,21 @@ async function deleteTask(taskId) {
     if (!confirm('Are you sure you want to delete this task?')) return;
     
     try {
+        console.log('Deleting task', taskId, 'for user:', currentUser);
+        
+        // Get current user's tasks
+        const userTasks = getCurrentUserTasks();
+        
         // Find task in array
-        const taskIndex = tasks.findIndex(t => t.id === taskId);
+        const taskIndex = userTasks.findIndex(t => t.id === taskId);
         if (taskIndex !== -1) {
-            tasks.splice(taskIndex, 1);
+            userTasks.splice(taskIndex, 1);
             
-            // Save to localStorage
-            localStorage.setItem('tasks', JSON.stringify(tasks));
+            // Save to currentUser's task array
+            saveCurrentUserTasks(userTasks);
+            
+            // Update local tasks variable
+            tasks = userTasks;
             
             showNotification('Task deleted successfully!', 'success');
             
@@ -799,6 +859,9 @@ async function deleteTask(taskId) {
             } else if (currentPage === 'history') {
                 loadHistory();
             }
+        } else {
+            console.error('Task not found:', taskId);
+            showNotification('Task not found', 'error');
         }
     } catch (error) {
         console.error('Task delete error:', error);
@@ -835,8 +898,8 @@ async function handleProfileUpdate(e) {
     
     try {
         // Update current user
-        currentUser.username = newUsername;
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        currentUser = newUsername;
+        localStorage.setItem('currentUser', currentUser);
         
         // Update users database
         const users = JSON.parse(localStorage.getItem('users') || '[]');
@@ -846,10 +909,22 @@ async function handleProfileUpdate(e) {
             localStorage.setItem('users', JSON.stringify(users));
         }
         
+        // CRITICAL: Transfer tasks from old username to new username
+        const allTasks = JSON.parse(localStorage.getItem('tasks') || '{}');
+        if (allTasks[currentUsername]) {
+            allTasks[newUsername] = allTasks[currentUsername];
+            delete allTasks[currentUsername]; // Remove old username entry
+            localStorage.setItem('tasks', JSON.stringify(allTasks));
+            console.log('Transferred tasks from', currentUsername, 'to', newUsername);
+        }
+        
         // Update UI
         updateSidebarUsername();
         document.getElementById('currentUsername').value = newUsername;
         document.getElementById('newUsername').value = '';
+        
+        // Reload dashboard with new username
+        loadDashboard();
         
         console.log('Username updated successfully for:', newUsername);
         showNotification('Username updated successfully!', 'success');
@@ -893,7 +968,7 @@ async function handlePasswordUpdate(e) {
     try {
         // Verify old password (basic security)
         const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const user = users.find(u => u.username === currentUser.username);
+        const user = users.find(u => u.username === currentUser);
         
         if (!user || user.password !== oldPassword) {
             console.log('Password update failed: old password incorrect');
@@ -902,7 +977,7 @@ async function handlePasswordUpdate(e) {
         }
         
         // Update password
-        const userIndex = users.findIndex(u => u.username === currentUser.username);
+        const userIndex = users.findIndex(u => u.username === currentUser);
         if (userIndex !== -1) {
             users[userIndex].password = newPassword;
             localStorage.setItem('users', JSON.stringify(users));
@@ -913,7 +988,7 @@ async function handlePasswordUpdate(e) {
         document.getElementById('newPassword').value = '';
         document.getElementById('confirmPassword').value = '';
         
-        console.log('Password updated successfully for:', currentUser.username);
+        console.log('Password updated successfully for:', currentUser);
         showNotification('Password updated successfully!', 'success');
     } catch (error) {
         console.error('Password update error:', error);
@@ -1257,13 +1332,13 @@ function initializeEventListeners() {
 window.debugTaskTracker = function() {
     console.log('=== TASK TRACKER DEBUG ===');
     console.log('Current user:', currentUser);
-    console.log('Tasks:', tasks);
+    console.log('Current user tasks:', getCurrentUserTasks());
     console.log('Current page:', currentPage);
     
     // Check localStorage
     console.log('Users in localStorage:', JSON.parse(localStorage.getItem('users') || '[]'));
-    console.log('Tasks in localStorage:', JSON.parse(localStorage.getItem('tasks') || '[]'));
-    console.log('Current user in localStorage:', JSON.parse(localStorage.getItem('currentUser') || 'null'));
+    console.log('All tasks in localStorage:', JSON.parse(localStorage.getItem('tasks') || '{}'));
+    console.log('Current user in localStorage:', localStorage.getItem('currentUser') || 'null');
     
     // Check DOM elements
     const loginBtn = document.getElementById('loginBtn');
@@ -1308,6 +1383,13 @@ window.debugTaskTracker = function() {
         const section = document.getElementById(sectionId);
         console.log(`${sectionId}:`, section ? 'found' : 'NOT FOUND', section ? `display: ${section.style.display}` : '');
     });
+    
+    // Show user-specific data separation
+    if (currentUser) {
+        console.log('=== USER-SPECIFIC DATA ===');
+        console.log(`${currentUser} has ${getCurrentUserTasks().length} tasks`);
+        console.log('Sample tasks:', getCurrentUserTasks().slice(0, 3));
+    }
     
     console.log('=== END DEBUG ===');
 };
