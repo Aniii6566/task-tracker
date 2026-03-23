@@ -741,13 +741,22 @@ function navigateToSettings() {
 // Load dashboard data
 async function loadDashboard() {
     try {
-        console.log('Loading dashboard data for user:', currentUser);
+        console.log('🔄 Loading dashboard data for user:', currentUser);
+        
+        // Validate user
+        if (!currentUser) {
+            console.error('❌ No current user found');
+            showAuth();
+            return;
+        }
         
         // Update missed tasks first
         updateMissedTasks();
         
-        // Load ONLY currentUser tasks from localStorage
-        tasks = getCurrentUserTasks();
+        // Load tasks using API-ready function
+        tasks = await fetchTasks();
+        
+        console.log('📊 Dashboard tasks loaded:', tasks);
         
         // Update all dashboard components
         updateStats();
@@ -755,7 +764,7 @@ async function loadDashboard() {
         renderProgressCard();
         renderWeeklyAnalytics();
     } catch (error) {
-        console.error('Dashboard load error:', error);
+        console.error('❌ Dashboard load error:', error);
         showNotification('Failed to load dashboard', 'error');
     }
 }
@@ -898,7 +907,7 @@ function renderWeeklyAnalytics() {
                     ${weekData.map(day => `
                         <div class="day-item">
                             <span class="day-name">${day.dayName}</span>
-                            <span class="day-percentage" style="color: ${day.percentage === 100 ? '#10b981' : '#6b7280'}">
+                            <span class="day-percentage" style="color: ${day.percentage === 100 ? '#10b981' : day.percentage > 0 ? '#f59e0b' : '#6b7280'}">
                                 ${day.percentage}%
                             </span>
                         </div>
@@ -1013,20 +1022,91 @@ function renderHistory(allTasks) {
 
 // ===== TASK OPERATIONS =====
 
+// ===== API-READY TASK MANAGEMENT =====
+
+// API-ready functions (mock for now, real backend ready)
+async function fetchTasks() {
+    try {
+        // Mock API call - replace with real API later
+        const userTasks = getCurrentUserTasks();
+        console.log('📊 Fetching tasks for user:', currentUser, userTasks);
+        return userTasks;
+    } catch (error) {
+        console.error('❌ Failed to fetch tasks:', error);
+        return [];
+    }
+}
+
+async function addTask(taskData) {
+    try {
+        // Mock API call - replace with real API later
+        console.log('➕ Adding task:', taskData);
+        
+        const userTasks = getCurrentUserTasks();
+        const newTask = {
+            id: Date.now(),
+            title: taskData.title,
+            status: 'pending',
+            date: getTodayString(),
+            completed: false,
+            user: currentUser,
+            created_at: new Date().toISOString()
+        };
+        
+        userTasks.push(newTask);
+        saveCurrentUserTasks(userTasks);
+        
+        console.log('✅ Task added successfully:', newTask);
+        return newTask;
+    } catch (error) {
+        console.error('❌ Failed to add task:', error);
+        throw error;
+    }
+}
+
+async function updateTask(taskId, updates) {
+    try {
+        // Mock API call - replace with real API later
+        console.log('🔄 Updating task:', taskId, updates);
+        
+        const userTasks = getCurrentUserTasks();
+        const taskIndex = userTasks.findIndex(t => t.id === taskId);
+        
+        if (taskIndex !== -1) {
+            userTasks[taskIndex] = { ...userTasks[taskIndex], ...updates };
+            saveCurrentUserTasks(userTasks);
+            console.log('✅ Task updated successfully:', userTasks[taskIndex]);
+            return userTasks[taskIndex];
+        }
+        
+        throw new Error('Task not found');
+    } catch (error) {
+        console.error('❌ Failed to update task:', error);
+        throw error;
+    }
+}
+
 // Handle quick add task
 async function handleQuickAddTask(e) {
     e.preventDefault();
-    console.log('Quick add task submitted for user:', currentUser);
+    console.log('🚀 Quick add task submitted for user:', currentUser);
     
     const titleInput = document.getElementById('quickTaskTitle');
     const title = titleInput.value.trim();
     
-    console.log('Task title:', title);
+    console.log('📝 Task title:', title);
+    console.log('👤 Current user:', currentUser);
     
     // Validate input
     if (!title) {
         showNotification('Please enter a task title', 'error');
         titleInput.focus();
+        return;
+    }
+    
+    // Validate user
+    if (!currentUser) {
+        showNotification('Please login to add tasks', 'error');
         return;
     }
     
@@ -1037,27 +1117,13 @@ async function handleQuickAddTask(e) {
     submitBtn.innerHTML = '<div class="loading"></div> Adding...';
     
     try {
-        // Create new task
-        const newTask = {
-            id: Date.now(),
-            title: title,
-            status: 'pending',
-            date: getTodayString(),
-            user: currentUser,
-            created_at: new Date().toISOString()
-        };
-        
-        // Get current user's tasks and add new task
-        const userTasks = getCurrentUserTasks();
-        userTasks.push(newTask);
-        
-        // Save to currentUser's task array
-        saveCurrentUserTasks(userTasks);
+        // Create new task using API-ready function
+        const newTask = await addTask({ title });
         
         // Update local tasks variable
-        tasks = userTasks;
+        tasks = await fetchTasks();
         
-        console.log('Task created for user', currentUser, ':', newTask);
+        console.log('🎉 Task created successfully:', newTask);
         
         showNotification('Task created successfully!', 'success');
         titleInput.value = ''; // Clear input
@@ -1066,7 +1132,7 @@ async function handleQuickAddTask(e) {
         // Refresh dashboard data
         await loadDashboard();
     } catch (error) {
-        console.error('Task creation error:', error);
+        console.error('❌ Task creation error:', error);
         showNotification('Failed to create task. Please try again.', 'error');
     } finally {
         // Re-enable form
@@ -1078,38 +1144,30 @@ async function handleQuickAddTask(e) {
 // Update task status
 async function updateTaskStatus(taskId, status) {
     try {
-        console.log('Updating task', taskId, 'to', status, 'for user:', currentUser);
+        console.log('🔄 Updating task', taskId, 'to', status, 'for user:', currentUser);
         
-        // Get current user's tasks
-        const userTasks = getCurrentUserTasks();
+        // Validate user
+        if (!currentUser) {
+            showNotification('Please login to update tasks', 'error');
+            return;
+        }
         
-        // Find task in array
-        const taskIndex = userTasks.findIndex(t => t.id === taskId);
-        if (taskIndex !== -1) {
-            userTasks[taskIndex].status = status;
-            
-            // Save to currentUser's task array
-            saveCurrentUserTasks(userTasks);
-            
-            // Update local tasks variable
-            tasks = userTasks;
-            
-            showNotification('Task updated successfully!', 'success');
-            
-            // Refresh current view
-            if (currentPage === 'dashboard') {
-                loadDashboard();
-            } else if (currentPage === 'tasks') {
-                loadTasks();
-            } else if (currentPage === 'completed') {
-                loadCompletedTasks();
-            }
-        } else {
-            console.error('Task not found:', taskId);
-            showNotification('Task not found', 'error');
+        // Use API-ready function
+        const updatedTask = await updateTask(taskId, { status });
+        
+        // Update local tasks variable
+        tasks = await fetchTasks();
+        
+        showNotification('Task updated successfully!', 'success');
+        
+        // Refresh current view
+        if (currentPage === 'dashboard') {
+            await loadDashboard();
+        } else if (currentPage === 'tasks') {
+            await loadTasks();
         }
     } catch (error) {
-        console.error('Task update error:', error);
+        console.error('❌ Task update error:', error);
         showNotification('Failed to update task', 'error');
     }
 }
