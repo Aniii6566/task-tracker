@@ -20,41 +20,174 @@
         <!-- Sidebar Overlay -->
         <div class="sidebar-overlay" onclick="closeSidebar()"></div>
 
-        <!-- Login Screen -->
-        <div id="loginScreen" class="login-container">
-            <div class="login-card">
-                <div class="text-center mb-8">
-                    <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-tasks text-3xl text-white"></i>
+        <!-- Auth Container -->
+        <div id="authContainer" class="auth-container">
+            <!-- Login Screen -->
+            <div id="loginScreen" class="auth-screen active">
+                <div class="auth-card">
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-tasks text-3xl text-white"></i>
+                        </div>
+                        <h1 class="text-3xl font-bold mb-2">TaskTracker Pro</h1>
+                        <p class="text-gray-400">Professional Task Management</p>
                     </div>
-                    <h1 class="text-3xl font-bold mb-2">TaskTracker Pro</h1>
-                    <p class="text-gray-400">Professional Task Management</p>
+
+                    <form id="loginForm" class="space-y-6">
+                        <div class="form-group">
+                            <label class="form-label">Username</label>
+                            <div class="relative">
+                                <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" style="left: 1rem; top: 0.875rem;"></i>
+                                <input type="text" id="loginUsername" placeholder="Enter your username" required
+                                       class="form-input" style="padding-left: 2.5rem;">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <div class="relative">
+                                <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" style="left: 1rem; top: 0.875rem;"></i>
+                                <input type="password" id="loginPassword" placeholder="Enter your password" required
+                                       class="form-input" style="padding-left: 2.5rem;">
+                            </div>
+                        </div>
+
+                        <div id="loginError" class="error-message hidden">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <span id="loginErrorText">Invalid username or password</span>
+                        </div>
+
+                        <button type="submit" id="loginBtn" class="btn btn-primary w-full">
+                            <span class="btn-text">Sign In</span>
+                            <div class="loading hidden"></div>
+                        </button>
+                    </form>
+
+                    <div class="auth-links">
+                        <button onclick="showSignup()" class="link-btn">
+                            <i class="fas fa-user-plus mr-2"></i>Create Account
+                        </button>
+                        <button onclick="showForgotPassword()" class="link-btn">
+                            <i class="fas fa-key mr-2"></i>Forgot Password?
+                        </button>
+                    </div>
                 </div>
+            </div>
 
-                <form id="loginForm" class="space-y-6">
-                    <div class="form-group">
-                        <label class="form-label">Email</label>
-                        <div class="relative">
-                            <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" style="left: 1rem; top: 0.875rem;"></i>
-                            <input type="email" id="email" value="admin@test.com" required
-                                   class="form-input" style="padding-left: 2.5rem;">
+            <!-- Signup Screen -->
+            <div id="signupScreen" class="auth-screen">
+                <div class="auth-card">
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user-plus text-3xl text-white"></i>
                         </div>
+                        <h1 class="text-3xl font-bold mb-2">Create Account</h1>
+                        <p class="text-gray-400">Join TaskTracker Pro</p>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <div class="relative">
-                            <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" style="left: 1rem; top: 0.875rem;"></i>
-                            <input type="password" id="password" value="admin123" required
-                                   class="form-input" style="padding-left: 2.5rem;">
+                    <form id="signupForm" class="space-y-6">
+                        <div class="form-group">
+                            <label class="form-label">Username</label>
+                            <div class="relative">
+                                <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" style="left: 1rem; top: 0.875rem;"></i>
+                                <input type="text" id="signupUsername" placeholder="Choose a username" required
+                                       class="form-input" style="padding-left: 2.5rem;">
+                            </div>
                         </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <div class="relative">
+                                <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" style="left: 1rem; top: 0.875rem;"></i>
+                                <input type="password" id="signupPassword" placeholder="Create a password" required
+                                       class="form-input" style="padding-left: 2.5rem;">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Confirm Password</label>
+                            <div class="relative">
+                                <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" style="left: 1rem; top: 0.875rem;"></i>
+                                <input type="password" id="signupConfirmPassword" placeholder="Confirm your password" required
+                                       class="form-input" style="padding-left: 2.5rem;">
+                            </div>
+                        </div>
+
+                        <div id="signupError" class="error-message hidden">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <span id="signupErrorText">Error creating account</span>
+                        </div>
+
+                        <button type="submit" id="signupBtn" class="btn btn-primary w-full">
+                            <span class="btn-text">Create Account</span>
+                            <div class="loading hidden"></div>
+                        </button>
+                    </form>
+
+                    <div class="auth-links">
+                        <button onclick="showLogin()" class="link-btn">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Back to Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forgot Password Screen -->
+            <div id="forgotPasswordScreen" class="auth-screen">
+                <div class="auth-card">
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-key text-3xl text-white"></i>
+                        </div>
+                        <h1 class="text-3xl font-bold mb-2">Reset Password</h1>
+                        <p class="text-gray-400">Enter your username to reset password</p>
                     </div>
 
-                    <button type="submit" id="loginBtn" class="btn btn-primary w-full">
-                        <span class="btn-text">Sign In</span>
-                        <div class="loading hidden"></div>
-                    </button>
-                </form>
+                    <form id="forgotPasswordForm" class="space-y-6">
+                        <div class="form-group">
+                            <label class="form-label">Username</label>
+                            <div class="relative">
+                                <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" style="left: 1rem; top: 0.875rem;"></i>
+                                <input type="text" id="forgotUsername" placeholder="Enter your username" required
+                                       class="form-input" style="padding-left: 2.5rem;">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">New Password</label>
+                            <div class="relative">
+                                <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" style="left: 1rem; top: 0.875rem;"></i>
+                                <input type="password" id="forgotNewPassword" placeholder="Enter new password" required
+                                       class="form-input" style="padding-left: 2.5rem;">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Confirm New Password</label>
+                            <div class="relative">
+                                <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" style="left: 1rem; top: 0.875rem;"></i>
+                                <input type="password" id="forgotConfirmPassword" placeholder="Confirm new password" required
+                                       class="form-input" style="padding-left: 2.5rem;">
+                            </div>
+                        </div>
+
+                        <div id="forgotError" class="error-message hidden">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <span id="forgotErrorText">Error resetting password</span>
+                        </div>
+
+                        <button type="submit" id="forgotBtn" class="btn btn-primary w-full">
+                            <span class="btn-text">Reset Password</span>
+                            <div class="loading hidden"></div>
+                        </button>
+                    </form>
+
+                    <div class="auth-links">
+                        <button onclick="showLogin()" class="link-btn">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Back to Login
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -69,6 +202,7 @@
                                 <i class="fas fa-tasks text-white"></i>
                             </div>
                             <h2 class="text-lg font-bold text-white">TaskTracker</h2>
+                            <p class="text-sm text-gray-400 mt-1" id="sidebarUsername">Welcome!</p>
                         </div>
 
                         <nav class="sidebar-nav">
@@ -246,8 +380,13 @@
                                     <h3 class="card-title">Profile Settings</h3>
                                     <form id="profileForm" class="settings-form">
                                         <div class="form-group">
-                                            <label class="form-label">Username</label>
-                                            <input type="text" id="userName" class="form-input" placeholder="Enter username">
+                                            <label class="form-label">Current Username</label>
+                                            <input type="text" id="currentUsername" class="form-input" readonly>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">New Username</label>
+                                            <input type="text" id="newUsername" class="form-input" placeholder="Enter new username">
                                         </div>
                                         
                                         <button type="submit" class="btn btn-primary">
