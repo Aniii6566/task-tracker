@@ -6,14 +6,14 @@ let currentPage = 'dashboard';
 // API Configuration (fallback to localStorage if backend not available)
 const API_BASE = 'https://task-tracker-vr1u.onrender.com/api';
 
-// Initialize app - CRITICAL: Wrap everything in DOMContentLoaded
-document.addEventListener('DOMContentLoaded', function() {
+// ===== CRITICAL: FIX EVENT BINDING =====
+document.addEventListener('DOMContentLoaded', () => {
     console.log('App initializing...');
     initializeAuthSystem();
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
     
-    // Initialize event listeners
+    // Initialize all event listeners
     initializeEventListeners();
 });
 
@@ -28,10 +28,10 @@ function initializeAuthSystem() {
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
         console.log('User already logged in:', currentUser.username);
-        showDashboard();
+        showSection('dashboardSection');
     } else {
         console.log('No user logged in, showing login');
-        showLogin();
+        showSection('loginSection');
     }
     
     // Initialize users database if not exists
@@ -45,33 +45,32 @@ function initializeAuthSystem() {
     }
 }
 
+// ===== CRITICAL: FIX NAVIGATION SYSTEM =====
+function showSection(id) {
+    console.log('Showing section:', id);
+    document.querySelectorAll(".section").forEach(sec => {
+        sec.style.display = "none";
+    });
+    document.getElementById(id).style.display = "block";
+}
+
 // Auth screen navigation
 function showLogin() {
     console.log('Showing login screen');
-    hideAllAuthScreens();
-    document.getElementById('loginScreen').classList.add('active');
+    showSection('loginSection');
     clearAuthForms();
 }
 
 function showSignup() {
     console.log('Showing signup screen');
-    hideAllAuthScreens();
-    document.getElementById('signupScreen').classList.add('active');
+    showSection('signupSection');
     clearAuthForms();
 }
 
 function showForgotPassword() {
     console.log('Showing forgot password screen');
-    hideAllAuthScreens();
-    document.getElementById('forgotPasswordScreen').classList.add('active');
+    showSection('forgotSection');
     clearAuthForms();
-}
-
-function hideAllAuthScreens() {
-    const screens = document.querySelectorAll('.auth-screen');
-    screens.forEach(screen => {
-        screen.classList.remove('active');
-    });
 }
 
 function clearAuthForms() {
@@ -98,11 +97,11 @@ function hideAllErrors() {
     });
 }
 
-// ===== LOGIN HANDLER - CRITICAL: Fixed form submission =====
+// ===== LOGIN HANDLER =====
 function handleLogin() {
     console.log('Login button clicked');
     
-    // CRITICAL: Get inputs by correct IDs
+    // Get inputs by correct IDs
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     
@@ -141,7 +140,8 @@ function handleLogin() {
                 
                 // Transition to dashboard
                 setTimeout(() => {
-                    showDashboard();
+                    showSection('dashboardSection');
+                    loadDashboard();
                 }, 1000);
                 
             } else {
@@ -163,11 +163,11 @@ function handleLogin() {
     }, 1000);
 }
 
-// ===== SIGNUP HANDLER - CRITICAL: Fixed form submission =====
+// ===== SIGNUP HANDLER =====
 function handleSignup() {
     console.log('Signup button clicked');
     
-    // CRITICAL: Get inputs by correct IDs
+    // Get inputs by correct IDs
     const username = document.getElementById('signupUsername').value.trim();
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('signupConfirmPassword').value;
@@ -196,7 +196,7 @@ function handleSignup() {
     }
     
     // Show loading state
-    const btn = document.getElementById('signupBtn');
+    const btn = document.getElementById('createAccountBtn');
     const btnText = btn.querySelector('.btn-text');
     const loading = btn.querySelector('.loading');
     
@@ -243,11 +243,11 @@ function handleSignup() {
     }, 1000);
 }
 
-// ===== FORGOT PASSWORD HANDLER - CRITICAL: Fixed form submission =====
+// ===== FORGOT PASSWORD HANDLER =====
 function handleForgotPassword() {
     console.log('Forgot password button clicked');
     
-    // CRITICAL: Get inputs by correct IDs
+    // Get inputs by correct IDs
     const username = document.getElementById('forgotUsername').value.trim();
     const newPassword = document.getElementById('forgotNewPassword').value;
     const confirmPassword = document.getElementById('forgotConfirmPassword').value;
@@ -271,7 +271,7 @@ function handleForgotPassword() {
     }
     
     // Show loading state
-    const btn = document.getElementById('forgotBtn');
+    const btn = document.getElementById('resetPasswordBtn');
     const btnText = btn.querySelector('.btn-text');
     const loading = btn.querySelector('.loading');
     
@@ -387,8 +387,7 @@ function closeSidebar() {
 // Show dashboard
 function showDashboard() {
     console.log('Showing dashboard');
-    document.getElementById('authContainer').classList.add('hidden');
-    document.getElementById('dashboardScreen').classList.remove('hidden');
+    showSection('dashboardSection');
     currentPage = 'dashboard';
     closeSidebar();
     setActiveNav('dashboard');
@@ -405,8 +404,6 @@ function logout() {
         showNotification('Logged out successfully!', 'info');
         
         // Show login screen
-        document.getElementById('dashboardScreen').classList.add('hidden');
-        document.getElementById('authContainer').classList.remove('hidden');
         showLogin();
     }
 }
@@ -438,9 +435,9 @@ function setActiveNav(pageName) {
     }
 }
 
-// ===== CRITICAL: SECTION SWITCHING SYSTEM =====
-function showSection(sectionId) {
-    console.log('Showing section:', sectionId);
+// Show/hide content sections
+function showContentSection(sectionId) {
+    console.log('Showing content section:', sectionId);
     
     // Hide all content sections
     const sections = document.querySelectorAll('.content-section');
@@ -453,14 +450,14 @@ function showSection(sectionId) {
     if (targetSection) {
         targetSection.classList.remove('hidden');
     } else {
-        console.error('Section not found:', sectionId);
+        console.error('Content section not found:', sectionId);
     }
 }
 
 // Navigation functions
 function showTasks() {
     currentPage = 'tasks';
-    showSection('tasksContent');
+    showContentSection('tasksContent');
     setActiveNav('tasks');
     closeSidebar();
     loadTasks();
@@ -468,7 +465,7 @@ function showTasks() {
 
 function showCompletedTasks() {
     currentPage = 'completed';
-    showSection('completedContent');
+    showContentSection('completedContent');
     setActiveNav('completed');
     closeSidebar();
     loadCompletedTasks();
@@ -476,7 +473,7 @@ function showCompletedTasks() {
 
 function showHistory() {
     currentPage = 'history';
-    showSection('historyContent');
+    showContentSection('historyContent');
     setActiveNav('history');
     closeSidebar();
     loadHistory();
@@ -484,7 +481,7 @@ function showHistory() {
 
 function showAnalytics() {
     currentPage = 'analytics';
-    showSection('analyticsContent');
+    showContentSection('analyticsContent');
     setActiveNav('analytics');
     closeSidebar();
     loadAnalytics();
@@ -492,7 +489,7 @@ function showAnalytics() {
 
 function showSettings() {
     currentPage = 'settings';
-    showSection('settingsContent');
+    showContentSection('settingsContent');
     setActiveNav('settings');
     closeSidebar();
     loadSettings();
@@ -638,10 +635,10 @@ function renderTasks() {
             <div class="task-title">${task.title}</div>
             <div class="task-actions">
                 <span class="badge status-${task.status.toLowerCase().replace(' ', '-')}">${task.status}</span>
-                <button onclick="updateTaskStatus(${task.id}, 'Completed')" class="btn btn-success btn-sm clickable-btn">
+                <button onclick="updateTaskStatus(${task.id}, 'Completed')" class="btn btn-success btn-sm">
                     <i class="fas fa-check"></i>
                 </button>
-                <button onclick="deleteTask(${task.id})" class="btn btn-danger btn-sm clickable-btn">
+                <button onclick="deleteTask(${task.id})" class="btn btn-danger btn-sm">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -663,7 +660,7 @@ function renderCompletedTasks(completedTasks) {
             <div class="task-title">${task.title}</div>
             <div class="task-actions">
                 <span class="badge status-completed">Completed</span>
-                <button onclick="deleteTask(${task.id})" class="btn btn-danger btn-sm clickable-btn">
+                <button onclick="deleteTask(${task.id})" class="btn btn-danger btn-sm">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -1083,11 +1080,11 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// ===== EVENT LISTENERS - CRITICAL: Fixed button events =====
+// ===== CRITICAL: FIX EVENT BINDING =====
 function initializeEventListeners() {
     console.log('Initializing event listeners...');
     
-    // CRITICAL: Auth buttons - Use click events
+    // Auth buttons
     const loginBtn = document.getElementById('loginBtn');
     if (loginBtn) {
         loginBtn.addEventListener('click', handleLogin);
@@ -1096,65 +1093,114 @@ function initializeEventListeners() {
         console.error('Login button not found');
     }
     
+    // CRITICAL: FIX CREATE ACCOUNT BUTTON
     const signupBtn = document.getElementById('signupBtn');
     if (signupBtn) {
-        signupBtn.addEventListener('click', handleSignup);
-        console.log('Signup button listener attached');
-    } else {
-        console.error('Signup button not found');
-    }
-    
-    const forgotBtn = document.getElementById('forgotBtn');
-    if (forgotBtn) {
-        forgotBtn.addEventListener('click', handleForgotPassword);
-        console.log('Forgot password button listener attached');
-    } else {
-        console.error('Forgot password button not found');
-    }
-    
-    // CRITICAL: Navigation buttons - Use click events
-    const showSignupBtn = document.getElementById('showSignupBtn');
-    if (showSignupBtn) {
-        showSignupBtn.addEventListener('click', function() {
-            console.log('Show signup button clicked');
+        signupBtn.addEventListener('click', function() {
+            console.log('Create Account button clicked');
             showSignup();
         });
-        console.log('Show signup button listener attached');
+        console.log('Create Account button listener attached');
     } else {
-        console.error('Show signup button not found');
+        console.error('Create Account button not found');
     }
     
-    const showForgotBtn = document.getElementById('showForgotBtn');
-    if (showForgotBtn) {
-        showForgotBtn.addEventListener('click', function() {
-            console.log('Show forgot button clicked');
+    // CRITICAL: FIX FORGOT PASSWORD BUTTON
+    const forgotBtn = document.getElementById('forgotBtn');
+    if (forgotBtn) {
+        forgotBtn.addEventListener('click', function() {
+            console.log('Forgot Password button clicked');
             showForgotPassword();
         });
-        console.log('Show forgot button listener attached');
+        console.log('Forgot Password button listener attached');
     } else {
-        console.error('Show forgot button not found');
+        console.error('Forgot Password button not found');
     }
     
-    const showLoginBtn = document.getElementById('showLoginBtn');
-    if (showLoginBtn) {
-        showLoginBtn.addEventListener('click', function() {
-            console.log('Show login button clicked');
-            showLogin();
-        });
-        console.log('Show login button listener attached');
+    // Create account form
+    const createAccountBtn = document.getElementById('createAccountBtn');
+    if (createAccountBtn) {
+        createAccountBtn.addEventListener('click', handleSignup);
+        console.log('Create Account form listener attached');
     } else {
-        console.error('Show login button not found');
+        console.error('Create Account form button not found');
     }
     
-    const showLoginBtn2 = document.getElementById('showLoginBtn2');
-    if (showLoginBtn2) {
-        showLoginBtn2.addEventListener('click', function() {
-            console.log('Show login button 2 clicked');
+    // Reset password form
+    const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+    if (resetPasswordBtn) {
+        resetPasswordBtn.addEventListener('click', handleForgotPassword);
+        console.log('Reset Password form listener attached');
+    } else {
+        console.error('Reset Password form button not found');
+    }
+    
+    // Back to login buttons
+    const backToLoginBtn = document.getElementById('backToLoginBtn');
+    if (backToLoginBtn) {
+        backToLoginBtn.addEventListener('click', function() {
+            console.log('Back to Login button clicked');
             showLogin();
         });
-        console.log('Show login button 2 listener attached');
+        console.log('Back to Login button listener attached');
+    }
+    
+    const backToLoginBtn2 = document.getElementById('backToLoginBtn2');
+    if (backToLoginBtn2) {
+        backToLoginBtn2.addEventListener('click', function() {
+            console.log('Back to Login button 2 clicked');
+            showLogin();
+        });
+        console.log('Back to Login button 2 listener attached');
+    }
+    
+    // CRITICAL: FIX DASHBOARD BUTTON
+    const dashboardBtn = document.getElementById('dashboardBtn');
+    if (dashboardBtn) {
+        dashboardBtn.addEventListener('click', function() {
+            console.log('Dashboard button clicked');
+            showDashboard();
+        });
+        console.log('Dashboard button listener attached');
     } else {
-        console.error('Show login button 2 not found');
+        console.error('Dashboard button not found');
+    }
+    
+    // Sidebar navigation buttons
+    const tasksBtn = document.getElementById('tasksBtn');
+    if (tasksBtn) {
+        tasksBtn.addEventListener('click', showTasks);
+        console.log('Tasks button listener attached');
+    }
+    
+    const completedBtn = document.getElementById('completedBtn');
+    if (completedBtn) {
+        completedBtn.addEventListener('click', showCompletedTasks);
+        console.log('Completed button listener attached');
+    }
+    
+    const historyBtn = document.getElementById('historyBtn');
+    if (historyBtn) {
+        historyBtn.addEventListener('click', showHistory);
+        console.log('History button listener attached');
+    }
+    
+    const analyticsBtn = document.getElementById('analyticsBtn');
+    if (analyticsBtn) {
+        analyticsBtn.addEventListener('click', showAnalytics);
+        console.log('Analytics button listener attached');
+    }
+    
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', showSettings);
+        console.log('Settings button listener attached');
+    }
+    
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+        console.log('Logout button listener attached');
     }
     
     // App forms
@@ -1199,19 +1245,17 @@ window.debugTaskTracker = function() {
     const loginBtn = document.getElementById('loginBtn');
     const signupBtn = document.getElementById('signupBtn');
     const forgotBtn = document.getElementById('forgotBtn');
+    const dashboardBtn = document.getElementById('dashboardBtn');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
-    const showSignupBtn = document.getElementById('showSignupBtn');
-    const showForgotBtn = document.getElementById('showForgotBtn');
     
     console.log('DOM elements check:');
     console.log('Login button:', loginBtn ? 'found' : 'NOT FOUND');
-    console.log('Signup button:', signupBtn ? 'found' : 'NOT FOUND');
-    console.log('Forgot button:', forgotBtn ? 'found' : 'NOT FOUND');
+    console.log('Create Account button:', signupBtn ? 'found' : 'NOT FOUND');
+    console.log('Forgot Password button:', forgotBtn ? 'found' : 'NOT FOUND');
+    console.log('Dashboard button:', dashboardBtn ? 'found' : 'NOT FOUND');
     console.log('Username input:', usernameInput ? 'found' : 'NOT FOUND');
     console.log('Password input:', passwordInput ? 'found' : 'NOT FOUND');
-    console.log('Show signup button:', showSignupBtn ? 'found' : 'NOT FOUND');
-    console.log('Show forgot button:', showForgotBtn ? 'found' : 'NOT FOUND');
     
     // Test input values and properties
     if (usernameInput) {
