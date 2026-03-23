@@ -13,10 +13,8 @@
 <body>
     <!-- Auth Container -->
     <div id="authContainer">
-        <!-- Main Content -->
-        <main class="main-content" id="mainContent">
-            <!-- Login Section -->
-            <div id="loginSection" class="section">
+        <!-- Login Section -->
+        <div id="loginSection" class="section">
                 <div class="auth-container">
                     <div class="auth-card">
                         <div class="text-center mb-8">
@@ -292,6 +290,12 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Progress Card -->
+                        <div id="progressCard"></div>
+                        
+                        <!-- Weekly Analytics -->
+                        <div id="weeklyAnalytics"></div>
                     </div>
 
                     <!-- Quick Add Task -->
@@ -358,6 +362,13 @@
                 <div class="container">
                     <div class="page-header">
                         <h1 class="page-title">Task History</h1>
+                        <div class="date-picker-container">
+                            <input type="date" id="historyDatePicker" class="form-input">
+                            <button onclick="loadHistoryForDate()" class="btn btn-secondary">
+                                <i class="fas fa-search"></i>
+                                <span>View Date</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="card">

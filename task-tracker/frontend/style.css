@@ -31,25 +31,31 @@
 
 #appContainer {
   display: none;
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
 }
 
 #authContainer {
   display: flex;
-  height: 100vh;
-  width: 100%;
   justify-content: center;
   align-items: center;
+  height: 100vh;
+  width: 100%;
   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-  position: relative;
-  z-index: 1;
+}
+
+/* ===== CRITICAL: ISOLATE AUTH CONTAINER FROM APP LAYOUT ===== */
+
+#authContainer .section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 /* ===== CRITICAL: CLEAN APP ARCHITECTURE ===== */
 
-/* App Container - Sidebar + Main Content */
 .app-layout {
   display: flex;
   height: 100vh;
@@ -77,13 +83,14 @@
   padding: 20px;
 }
 
-/* ===== CRITICAL: FIX BODY & HTML ===== */
+/* ===== CRITICAL: ENSURE FULL WIDTH & RESET ===== */
+
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%;
   width: 100%;
-  overflow: hidden;
+  height: 100%;
+  overflow-x: hidden;
 }
 
 /* ===== CRITICAL: FIX SCROLLING ISSUE ===== */
@@ -1570,6 +1577,135 @@ html {
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
+}
+
+/* ===== PROGRESS TRACKER STYLES ===== */
+
+/* Progress Bar */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--input);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success) 0%, var(--success-hover) 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Task Streak */
+.task-streak {
+  font-size: 0.75rem;
+  color: var(--warning);
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+/* Task Content Layout */
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Status Colors */
+.status-completed {
+  background-color: var(--success);
+  color: white;
+}
+
+.status-missed {
+  background-color: var(--danger);
+  color: white;
+}
+
+.status-pending {
+  background-color: var(--text-muted);
+  color: white;
+}
+
+/* Weekly Analytics */
+.week-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.day-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: var(--input);
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.day-name {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.day-percentage {
+  font-weight: 600;
+}
+
+/* Date Picker */
+.date-picker-container {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.date-picker-container .form-input {
+  width: 200px;
+}
+
+/* History Summary */
+.history-summary {
+  margin-bottom: 1.5rem;
+}
+
+.history-summary h3 {
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
+
+.summary-stats {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state-text {
+  font-size: 1.125rem;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state-subtext {
+  font-size: 0.875rem;
+  color: var(--text-muted);
 }
 
 /* ===== MOBILE RESPONSIVE ===== */

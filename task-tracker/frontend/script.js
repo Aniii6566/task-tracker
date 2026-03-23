@@ -17,6 +17,179 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeEventListeners();
 });
 
+// Load history for specific date
+function loadHistoryForDate() {
+    const dateInput = document.getElementById('historyDatePicker');
+    const selectedDate = dateInput.value;
+    
+    if (!selectedDate) {
+        showNotification('Please select a date', 'error');
+        return;
+    }
+    
+    const userTasks = getCurrentUserTasks();
+    const tasksForDate = userTasks.filter(t => t.date === selectedDate);
+    
+    const container = document.getElementById('historyList');
+    
+    if (tasksForDate.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📅</div>
+                <div class="empty-state-text">No tasks found for ${selectedDate}</div>
+                <div class="empty-state-subtext">Try selecting a different date</div>
+            </div>
+        `;
+        return;
+    }
+    
+    const completed = tasksForDate.filter(t => t.status === 'completed');
+    const missed = tasksForDate.filter(t => t.status === 'missed');
+    const pending = tasksForDate.filter(t => t.status === 'pending');
+    
+    container.innerHTML = `
+        <div class="history-summary">
+            <h3>Tasks for ${selectedDate}</h3>
+            <div class="summary-stats">
+                <span class="badge status-completed">✔ ${completed.length} Completed</span>
+                <span class="badge status-missed">✖ ${missed.length} Missed</span>
+                <span class="badge status-pending">⏳ ${pending.length} Pending</span>
+            </div>
+        </div>
+        <div class="tasks-list">
+            ${tasksForDate.map(task => {
+                const statusInfo = getTaskStatusInfo(task.status);
+                return `
+                    <div class="task-item">
+                        <div class="task-content">
+                            <div class="task-title">${task.title}</div>
+                        </div>
+                        <div class="task-actions">
+                            <span class="badge ${statusInfo.class}" style="color: ${statusInfo.color}">
+                                ${statusInfo.icon} ${task.status}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+// ===== PROGRESS TRACKER SYSTEM =====
+
+// Get today's date string
+function getTodayString() {
+    return new Date().toISOString().split('T')[0];
+}
+
+// Calculate streak for a task
+function calculateTaskStreak(taskTitle) {
+    const userTasks = getCurrentUserTasks();
+    const dates = [...new Set(userTasks.map(t => t.date))].sort().reverse();
+    
+    let streak = 0;
+    let currentDate = new Date();
+    
+    for (let i = 0; i < dates.length; i++) {
+        const dateStr = dates[i];
+        const tasksForDate = userTasks.filter(t => t.date === dateStr);
+        const taskForDate = tasksForDate.find(t => t.title === taskTitle);
+        
+        if (taskForDate && taskForDate.status === 'completed') {
+            const taskDate = new Date(dateStr);
+            const daysDiff = Math.floor((currentDate - taskDate) / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff === streak) {
+                streak++;
+            } else {
+                break;
+            }
+        } else {
+            break;
+        }
+        
+        currentDate = new Date(currentDate);
+        currentDate.setDate(currentDate.getDate() - 1);
+    }
+    
+    return streak;
+}
+
+// Calculate daily progress percentage
+function calculateDailyProgress(date = getTodayString()) {
+    const userTasks = getCurrentUserTasks();
+    const tasksForDate = userTasks.filter(t => t.date === date);
+    
+    if (tasksForDate.length === 0) return 0;
+    
+    const completedTasks = tasksForDate.filter(t => t.status === 'completed').length;
+    return Math.round((completedTasks / tasksForDate.length) * 100);
+}
+
+// Get weekly analytics
+function getWeeklyAnalytics() {
+    const userTasks = getCurrentUserTasks();
+    const today = new Date();
+    const weekData = [];
+    
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const tasksForDate = userTasks.filter(t => t.date === dateStr);
+        const completed = tasksForDate.filter(t => t.status === 'completed').length;
+        const total = tasksForDate.length;
+        
+        weekData.push({
+            date: dateStr,
+            dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
+            completed,
+            total,
+            percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+        });
+    }
+    
+    return weekData;
+}
+
+// Get task status icon and color
+function getTaskStatusInfo(status) {
+    switch (status) {
+        case 'completed':
+            return { icon: '✔', color: '#10b981', class: 'status-completed' };
+        case 'missed':
+            return { icon: '✖', color: '#ef4444', class: 'status-missed' };
+        default:
+            return { icon: '⏳', color: '#6b7280', class: 'status-pending' };
+    }
+}
+
+// Check and update missed tasks
+function updateMissedTasks() {
+    const userTasks = getCurrentUserTasks();
+    const today = getTodayString();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    
+    let updated = false;
+    
+    userTasks.forEach(task => {
+        if (task.date === yesterdayStr && task.status === 'pending') {
+            task.status = 'missed';
+            updated = true;
+        }
+    });
+    
+    if (updated) {
+        saveCurrentUserTasks(userTasks);
+        tasks = userTasks;
+        console.log('Updated missed tasks for yesterday');
+    }
+}
+
 // ===== LAYOUT CONTROLLER FUNCTIONS =====
 
 function showApp() {
@@ -570,11 +743,17 @@ async function loadDashboard() {
     try {
         console.log('Loading dashboard data for user:', currentUser);
         
+        // Update missed tasks first
+        updateMissedTasks();
+        
         // Load ONLY currentUser tasks from localStorage
         tasks = getCurrentUserTasks();
         
+        // Update all dashboard components
         updateStats();
         renderRecentTasks();
+        renderProgressCard();
+        renderWeeklyAnalytics();
     } catch (error) {
         console.error('Dashboard load error:', error);
         showNotification('Failed to load dashboard', 'error');
@@ -657,9 +836,12 @@ function loadSettings() {
 
 // Update dashboard stats
 function updateStats() {
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(task => task.status === 'Completed').length;
-    const pendingTasks = tasks.filter(task => task.status === 'Pending').length;
+    const today = getTodayString();
+    const todayTasks = tasks.filter(t => t.date === today);
+    
+    const totalTasks = todayTasks.length;
+    const completedTasks = todayTasks.filter(task => task.status === 'completed').length;
+    const pendingTasks = todayTasks.filter(task => task.status === 'pending').length;
     
     document.getElementById('totalTasks').textContent = totalTasks;
     document.getElementById('completedTasks').textContent = completedTasks;
@@ -668,24 +850,95 @@ function updateStats() {
     console.log('Stats updated:', { totalTasks, completedTasks, pendingTasks });
 }
 
+// Render progress card
+function renderProgressCard() {
+    const progress = calculateDailyProgress();
+    const progressContainer = document.getElementById('progressCard');
+    
+    if (progressContainer) {
+        progressContainer.innerHTML = `
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon bg-warning">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <p class="metric-label">Today's Progress</p>
+                        <p class="metric-value">${progress}%</p>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${progress}%"></div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Render weekly analytics
+function renderWeeklyAnalytics() {
+    const weekData = getWeeklyAnalytics();
+    const analyticsContainer = document.getElementById('weeklyAnalytics');
+    
+    if (analyticsContainer) {
+        const completedDays = weekData.filter(d => d.percentage === 100).length;
+        
+        analyticsContainer.innerHTML = `
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon bg-accent">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <div>
+                        <p class="metric-label">Weekly Performance</p>
+                        <p class="metric-value">${completedDays}/7 days</p>
+                    </div>
+                </div>
+                <div class="week-summary">
+                    ${weekData.map(day => `
+                        <div class="day-item">
+                            <span class="day-name">${day.dayName}</span>
+                            <span class="day-percentage" style="color: ${day.percentage === 100 ? '#10b981' : '#6b7280'}">
+                                ${day.percentage}%
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+}
+
 // Render recent tasks
 function renderRecentTasks() {
     const container = document.getElementById('recentTasks');
-    const recentTasks = tasks.slice(0, 5);
+    const today = getTodayString();
+    const todayTasks = tasks.filter(t => t.date === today).slice(0, 5);
     
-    if (recentTasks.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 text-center">No tasks yet. Add your first task above!</p>';
+    if (todayTasks.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center">Start your day by adding tasks 🚀</p>';
         return;
     }
     
-    container.innerHTML = recentTasks.map(task => `
-        <div class="task-item">
-            <div class="task-title">${task.title}</div>
-            <div class="task-actions">
-                <span class="badge status-${task.status.toLowerCase().replace(' ', '-')}">${task.status}</span>
+    container.innerHTML = todayTasks.map(task => {
+        const statusInfo = getTaskStatusInfo(task.status);
+        const streak = calculateTaskStreak(task.title);
+        const streakDisplay = streak > 0 ? `🔥 ${streak} days` : '';
+        
+        return `
+            <div class="task-item">
+                <div class="task-content">
+                    <div class="task-title">${task.title}</div>
+                    ${streakDisplay ? `<div class="task-streak">${streakDisplay}</div>` : ''}
+                </div>
+                <div class="task-actions">
+                    <span class="badge ${statusInfo.class}" style="color: ${statusInfo.color}">
+                        ${statusInfo.icon} ${task.status}
+                    </span>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // Render all tasks
@@ -788,8 +1041,9 @@ async function handleQuickAddTask(e) {
         const newTask = {
             id: Date.now(),
             title: title,
-            status: 'Pending',
-            user: currentUser, // Store which user owns this task
+            status: 'pending',
+            date: getTodayString(),
+            user: currentUser,
             created_at: new Date().toISOString()
         };
         
