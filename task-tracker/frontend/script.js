@@ -22,36 +22,45 @@ document.addEventListener('DOMContentLoaded', () => {
 function showApp() {
     document.getElementById("authContainer").style.display = "none";
     document.getElementById("appContainer").style.display = "flex";
-    console.log('Showing app container');
+    console.log("🏠 Showing App - Auth hidden, App visible");
 }
 
 function showAuth() {
     document.getElementById("authContainer").style.display = "flex";
     document.getElementById("appContainer").style.display = "none";
-    console.log('Showing auth container');
+    console.log("🔐 Showing Auth - App hidden, Auth visible");
 }
 
 // ===== AUTHENTICATION SYSTEM =====
 
 // Initialize authentication system
 function initializeAuthSystem() {
-    console.log('Initializing auth system...');
+    console.log('🔍 Initializing auth system...');
     
     // Check if user is already logged in
     const savedUser = localStorage.getItem('currentUser');
+    console.log('👤 User check result:', savedUser ? 'User logged in' : 'No user found');
+    
     if (savedUser) {
         currentUser = savedUser; // Store username string directly
-        console.log('User already logged in:', currentUser);
+        console.log('✅ User already logged in:', currentUser);
         
         // Initialize tasks structure for this user if needed
         initializeUserTasks(currentUser);
         
-        showApp(); // CRITICAL: Show app container
+        // CRITICAL: Show app container first
+        showApp();
+        
+        // Then load dashboard content
         showSection('dashboardSection');
         loadDashboard();
     } else {
-        console.log('No user logged in, showing login');
-        showAuth(); // CRITICAL: Show auth container
+        console.log('🚪 No user logged in, showing login');
+        
+        // CRITICAL: Show auth container first
+        showAuth();
+        
+        // Then show login section
         showSection('loginSection');
     }
     
@@ -140,21 +149,21 @@ function updateActiveNav(sectionId) {
 
 // Auth screen navigation
 function showLogin() {
-    console.log('Showing login screen');
+    console.log('🔑 Showing login screen');
     showAuth(); // CRITICAL: Show auth container
     showSection('loginSection');
     clearAuthForms();
 }
 
 function showSignup() {
-    console.log('Showing signup screen');
+    console.log('👤 Showing signup screen');
     showAuth(); // CRITICAL: Show auth container
     showSection('signupSection');
     clearAuthForms();
 }
 
 function showForgotPassword() {
-    console.log('Showing forgot password screen');
+    console.log('🔒 Showing forgot password screen');
     showAuth(); // CRITICAL: Show auth container
     showSection('forgotSection');
     clearAuthForms();
@@ -230,6 +239,7 @@ function handleLogin() {
                 
                 // Transition to dashboard
                 setTimeout(() => {
+                    console.log('🚀 Login successful, transitioning to dashboard...');
                     showApp(); // CRITICAL: Show app container
                     showSection('dashboardSection');
                     loadDashboard();
@@ -477,7 +487,7 @@ function closeSidebar() {
 
 // Show dashboard
 function showDashboard() {
-    console.log('Showing dashboard');
+    console.log('🏠 Showing dashboard');
     showApp(); // CRITICAL: Show app container
     showSection('dashboardSection');
     currentPage = 'dashboard';
@@ -489,12 +499,14 @@ function showDashboard() {
 // Logout function
 function logout() {
     if (confirm('Are you sure you want to logout?')) {
+        console.log('🚪 User requested logout...');
         localStorage.removeItem('currentUser'); // Remove currentUser ONLY
         currentUser = null; // Keep all users + tasks
         
         showNotification('Logged out successfully!', 'info');
         
         // Show login screen
+        console.log('🔄 Logging out, showing auth screen...');
         showAuth(); // CRITICAL: Show auth container
         showLogin();
     }
