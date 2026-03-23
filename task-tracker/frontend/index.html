@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app">
+    <div id="app" class="app">
         <!-- Mobile Menu Button -->
         <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
             <i class="fas fa-bars"></i>
@@ -20,432 +20,439 @@
         <!-- Sidebar Overlay -->
         <div class="sidebar-overlay" onclick="closeSidebar()"></div>
 
-        <!-- Auth Container -->
-        <div id="authContainer" class="auth-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-content">
+                <div class="text-center mb-8">
+                    <div class="w-12 h-12 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-tasks text-white"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-white">TaskTracker</h2>
+                    <p class="text-sm text-gray-400 mt-1" id="sidebarUsername">Welcome!</p>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <button id="dashboardBtn" class="nav-btn active" data-page="dashboard">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </button>
+                    <button id="tasksBtn" class="nav-btn" data-page="tasks">
+                        <i class="fas fa-tasks"></i>
+                        <span>Today's Tasks</span>
+                    </button>
+                    <button id="completedBtn" class="nav-btn" data-page="completed">
+                        <i class="fas fa-check"></i>
+                        <span>Completed Tasks</span>
+                    </button>
+                    <button id="historyBtn" class="nav-btn" data-page="history">
+                        <i class="fas fa-history"></i>
+                        <span>History</span>
+                    </button>
+                    <button id="analyticsBtn" class="nav-btn" data-page="analytics">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Analytics</span>
+                    </button>
+                    <button id="settingsBtn" class="nav-btn" data-page="settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </button>
+                    <button id="logoutBtn" class="nav-btn logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
             <!-- Login Section -->
             <div id="loginSection" class="section">
-                <div class="auth-card">
-                    <div class="text-center mb-8">
-                        <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-tasks text-3xl text-white"></i>
-                        </div>
-                        <h1 class="text-3xl font-bold mb-2">TaskTracker Pro</h1>
-                        <p class="text-gray-400">Professional Task Management</p>
-                    </div>
-
-                    <form id="loginForm" class="space-y-6" novalidate>
-                        <div class="form-group">
-                            <label class="form-label">Username</label>
-                            <div class="input-with-icon">
-                                <i class="fas fa-user input-icon"></i>
-                                <input type="text" id="username" placeholder="Enter your username"
-                                       class="form-input" autocomplete="username">
+                <div class="auth-container">
+                    <div class="auth-card">
+                        <div class="text-center mb-8">
+                            <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-tasks text-3xl text-white"></i>
                             </div>
+                            <h1 class="text-3xl font-bold mb-2">TaskTracker Pro</h1>
+                            <p class="text-gray-400">Professional Task Management</p>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Password</label>
-                            <div class="input-with-icon">
-                                <i class="fas fa-lock input-icon"></i>
-                                <input type="password" id="password" placeholder="Enter your password"
-                                       class="form-input" autocomplete="current-password">
+                        <form id="loginForm" class="space-y-6" novalidate>
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-user input-icon"></i>
+                                    <input type="text" id="username" placeholder="Enter your username"
+                                           class="form-input" autocomplete="username">
+                                </div>
                             </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Password</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-lock input-icon"></i>
+                                    <input type="password" id="password" placeholder="Enter your password"
+                                           class="form-input" autocomplete="current-password">
+                                </div>
+                            </div>
+
+                            <div id="loginError" class="error-message hidden">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                <span id="loginErrorText">Invalid username or password</span>
+                            </div>
+
+                            <button type="button" id="loginBtn" class="btn btn-primary w-full">
+                                <span class="btn-text">Sign In</span>
+                                <div class="loading hidden"></div>
+                            </button>
+                        </form>
+
+                        <div class="auth-links">
+                            <button type="button" id="signupBtn" class="btn btn-secondary w-full">
+                                <i class="fas fa-user-plus mr-2"></i>Create Account
+                            </button>
+                            <button type="button" id="forgotBtn" class="btn btn-secondary w-full">
+                                <i class="fas fa-key mr-2"></i>Forgot Password?
+                            </button>
                         </div>
-
-                        <div id="loginError" class="error-message hidden">
-                            <i class="fas fa-exclamation-circle mr-2"></i>
-                            <span id="loginErrorText">Invalid username or password</span>
-                        </div>
-
-                        <button type="button" id="loginBtn" class="btn btn-primary w-full">
-                            <span class="btn-text">Sign In</span>
-                            <div class="loading hidden"></div>
-                        </button>
-                    </form>
-
-                    <!-- CRITICAL: Fix button visibility -->
-                    <div class="auth-links">
-                        <button type="button" id="signupBtn" class="btn btn-secondary w-full">
-                            <i class="fas fa-user-plus mr-2"></i>Create Account
-                        </button>
-                        <button type="button" id="forgotBtn" class="btn btn-secondary w-full">
-                            <i class="fas fa-key mr-2"></i>Forgot Password?
-                        </button>
                     </div>
                 </div>
             </div>
 
             <!-- Signup Section -->
             <div id="signupSection" class="section" style="display: none;">
-                <div class="auth-card">
-                    <div class="text-center mb-8">
-                        <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-user-plus text-3xl text-white"></i>
-                        </div>
-                        <h1 class="text-3xl font-bold mb-2">Create Account</h1>
-                        <p class="text-gray-400">Join TaskTracker Pro</p>
-                    </div>
-
-                    <form id="signupForm" class="space-y-6" novalidate>
-                        <div class="form-group">
-                            <label class="form-label">Username</label>
-                            <div class="input-with-icon">
-                                <i class="fas fa-user input-icon"></i>
-                                <input type="text" id="signupUsername" placeholder="Choose a username"
-                                       class="form-input" autocomplete="username">
+                <div class="auth-container">
+                    <div class="auth-card">
+                        <div class="text-center mb-8">
+                            <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-user-plus text-3xl text-white"></i>
                             </div>
+                            <h1 class="text-3xl font-bold mb-2">Create Account</h1>
+                            <p class="text-gray-400">Join TaskTracker Pro</p>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Password</label>
-                            <div class="input-with-icon">
-                                <i class="fas fa-lock input-icon"></i>
-                                <input type="password" id="signupPassword" placeholder="Create a password"
-                                       class="form-input" autocomplete="new-password">
+                        <form id="signupForm" class="space-y-6" novalidate>
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-user input-icon"></i>
+                                    <input type="text" id="signupUsername" placeholder="Choose a username"
+                                           class="form-input" autocomplete="username">
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Confirm Password</label>
-                            <div class="input-with-icon">
-                                <i class="fas fa-lock input-icon"></i>
-                                <input type="password" id="signupConfirmPassword" placeholder="Confirm your password"
-                                       class="form-input" autocomplete="new-password">
+                            <div class="form-group">
+                                <label class="form-label">Password</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-lock input-icon"></i>
+                                    <input type="password" id="signupPassword" placeholder="Create a password"
+                                           class="form-input" autocomplete="new-password">
+                                </div>
                             </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Confirm Password</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-lock input-icon"></i>
+                                    <input type="password" id="signupConfirmPassword" placeholder="Confirm your password"
+                                           class="form-input" autocomplete="new-password">
+                                </div>
+                            </div>
+
+                            <div id="signupError" class="error-message hidden">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                <span id="signupErrorText">Error creating account</span>
+                            </div>
+
+                            <button type="button" id="createAccountBtn" class="btn btn-primary w-full">
+                                <span class="btn-text">Create Account</span>
+                                <div class="loading hidden"></div>
+                            </button>
+                        </form>
+
+                        <div class="auth-links">
+                            <button type="button" id="backToLoginBtn" class="btn btn-secondary w-full">
+                                <i class="fas fa-sign-in-alt mr-2"></i>Back to Login
+                            </button>
                         </div>
-
-                        <div id="signupError" class="error-message hidden">
-                            <i class="fas fa-exclamation-circle mr-2"></i>
-                            <span id="signupErrorText">Error creating account</span>
-                        </div>
-
-                        <button type="button" id="createAccountBtn" class="btn btn-primary w-full">
-                            <span class="btn-text">Create Account</span>
-                            <div class="loading hidden"></div>
-                        </button>
-                    </form>
-
-                    <div class="auth-links">
-                        <button type="button" id="backToLoginBtn" class="btn btn-secondary w-full">
-                            <i class="fas fa-sign-in-alt mr-2"></i>Back to Login
-                        </button>
                     </div>
                 </div>
             </div>
 
             <!-- Forgot Password Section -->
             <div id="forgotSection" class="section" style="display: none;">
-                <div class="auth-card">
-                    <div class="text-center mb-8">
-                        <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-key text-3xl text-white"></i>
-                        </div>
-                        <h1 class="text-3xl font-bold mb-2">Reset Password</h1>
-                        <p class="text-gray-400">Enter your username to reset password</p>
-                    </div>
-
-                    <form id="forgotPasswordForm" class="space-y-6" novalidate>
-                        <div class="form-group">
-                            <label class="form-label">Username</label>
-                            <div class="input-with-icon">
-                                <i class="fas fa-user input-icon"></i>
-                                <input type="text" id="forgotUsername" placeholder="Enter your username"
-                                       class="form-input" autocomplete="username">
+                <div class="auth-container">
+                    <div class="auth-card">
+                        <div class="text-center mb-8">
+                            <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-key text-3xl text-white"></i>
                             </div>
+                            <h1 class="text-3xl font-bold mb-2">Reset Password</h1>
+                            <p class="text-gray-400">Enter your username to reset password</p>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">New Password</label>
-                            <div class="input-with-icon">
-                                <i class="fas fa-lock input-icon"></i>
-                                <input type="password" id="forgotNewPassword" placeholder="Enter new password"
-                                       class="form-input" autocomplete="new-password">
+                        <form id="forgotPasswordForm" class="space-y-6" novalidate>
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-user input-icon"></i>
+                                    <input type="text" id="forgotUsername" placeholder="Enter your username"
+                                           class="form-input" autocomplete="username">
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Confirm New Password</label>
-                            <div class="input-with-icon">
-                                <i class="fas fa-lock input-icon"></i>
-                                <input type="password" id="forgotConfirmPassword" placeholder="Confirm new password"
-                                       class="form-input" autocomplete="new-password">
+                            <div class="form-group">
+                                <label class="form-label">New Password</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-lock input-icon"></i>
+                                    <input type="password" id="forgotNewPassword" placeholder="Enter new password"
+                                           class="form-input" autocomplete="new-password">
+                                </div>
                             </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Confirm New Password</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-lock input-icon"></i>
+                                    <input type="password" id="forgotConfirmPassword" placeholder="Confirm new password"
+                                           class="form-input" autocomplete="new-password">
+                                </div>
+                            </div>
+
+                            <div id="forgotError" class="error-message hidden">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                <span id="forgotErrorText">Error resetting password</span>
+                            </div>
+
+                            <button type="button" id="resetPasswordBtn" class="btn btn-primary w-full">
+                                <span class="btn-text">Reset Password</span>
+                                <div class="loading hidden"></div>
+                            </button>
+                        </form>
+
+                        <div class="auth-links">
+                            <button type="button" id="backToLoginBtn2" class="btn btn-secondary w-full">
+                                <i class="fas fa-sign-in-alt mr-2"></i>Back to Login
+                            </button>
                         </div>
-
-                        <div id="forgotError" class="error-message hidden">
-                            <i class="fas fa-exclamation-circle mr-2"></i>
-                            <span id="forgotErrorText">Error resetting password</span>
-                        </div>
-
-                        <button type="button" id="resetPasswordBtn" class="btn btn-primary w-full">
-                            <span class="btn-text">Reset Password</span>
-                            <div class="loading hidden"></div>
-                        </button>
-                    </form>
-
-                    <div class="auth-links">
-                        <button type="button" id="backToLoginBtn2" class="btn btn-secondary w-full">
-                            <i class="fas fa-sign-in-alt mr-2"></i>Back to Login
-                        </button>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Dashboard Section -->
-        <div id="dashboardSection" class="section" style="display: none;">
-            <div class="app-container">
-                <!-- Sidebar -->
-                <aside class="sidebar" id="sidebar">
-                    <div class="sidebar-content">
-                        <div class="text-center mb-8">
-                            <div class="w-12 h-12 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-tasks text-white"></i>
-                            </div>
-                            <h2 class="text-lg font-bold text-white">TaskTracker</h2>
-                            <p class="text-sm text-gray-400 mt-1" id="sidebarUsername">Welcome!</p>
-                        </div>
-
-                        <nav class="sidebar-nav">
-                            <button id="dashboardBtn" class="nav-btn active" data-page="dashboard">
-                                <i class="fas fa-home"></i>
-                                <span>Dashboard</span>
-                            </button>
-                            <button id="tasksBtn" class="nav-btn" data-page="tasks">
-                                <i class="fas fa-tasks"></i>
-                                <span>Today's Tasks</span>
-                            </button>
-                            <button id="completedBtn" class="nav-btn" data-page="completed">
-                                <i class="fas fa-check"></i>
-                                <span>Completed Tasks</span>
-                            </button>
-                            <button id="historyBtn" class="nav-btn" data-page="history">
-                                <i class="fas fa-history"></i>
-                                <span>History</span>
-                            </button>
-                            <button id="analyticsBtn" class="nav-btn" data-page="analytics">
-                                <i class="fas fa-chart-bar"></i>
-                                <span>Analytics</span>
-                            </button>
-                            <button id="settingsBtn" class="nav-btn" data-page="settings">
-                                <i class="fas fa-cog"></i>
-                                <span>Settings</span>
-                            </button>
-                            <button id="logoutBtn" class="nav-btn logout-btn">
-                                <i class="fas fa-sign-out-alt"></i>
-                                <span>Logout</span>
-                            </button>
-                        </nav>
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="section" style="display: none;">
+                <div class="container">
+                    <!-- Header -->
+                    <div class="dashboard-header">
+                        <h1 class="dashboard-title">Dashboard</h1>
                     </div>
-                </aside>
-
-                <!-- Main Content -->
-                <main class="main-content" id="mainContent">
-                    <div class="container">
-                        <!-- Dashboard Content -->
-                        <div id="dashboardContent" class="content-section fade-in">
-                            <!-- Header -->
-                            <div class="dashboard-header">
-                                <h1 class="dashboard-title">Dashboard</h1>
-                            </div>
-                            
-                            <!-- Metrics Grid -->
-                            <div class="metrics-grid">
-                                <div class="metric-card">
-                                    <div class="metric-header">
-                                        <div class="metric-icon bg-accent">
-                                            <i class="fas fa-tasks"></i>
-                                        </div>
-                                        <div>
-                                            <p class="metric-label">Total Tasks</p>
-                                            <p class="metric-value" id="totalTasks">0</p>
-                                        </div>
-                                    </div>
+                    
+                    <!-- Metrics Grid -->
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <div class="metric-icon bg-accent">
+                                    <i class="fas fa-tasks"></i>
                                 </div>
-                                
-                                <div class="metric-card">
-                                    <div class="metric-header">
-                                        <div class="metric-icon bg-success">
-                                            <i class="fas fa-check"></i>
-                                        </div>
-                                        <div>
-                                            <p class="metric-label">Completed</p>
-                                            <p class="metric-value" id="completedTasks">0</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="metric-card">
-                                    <div class="metric-header">
-                                        <div class="metric-icon bg-warning">
-                                            <i class="fas fa-clock"></i>
-                                        </div>
-                                        <div>
-                                            <p class="metric-label">Pending</p>
-                                            <p class="metric-value" id="pendingTasks">0</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Quick Add Task -->
-                            <div class="card">
-                                <h3 class="card-title">Quick Add Task</h3>
-                                <form id="quickAddForm" class="quick-add-form">
-                                    <div class="input-group">
-                                        <input type="text" id="quickTaskTitle" placeholder="Enter task title..." 
-                                               class="task-input">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-plus"></i>
-                                            <span>Add Task</span>
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-
-                            <!-- Recent Tasks -->
-                            <div class="card">
-                                <h3 class="card-title">Recent Tasks</h3>
-                                <div id="recentTasks" class="tasks-list">
-                                    <p class="text-gray-500 text-center">No tasks yet. Add your first task above!</p>
+                                <div>
+                                    <p class="metric-label">Total Tasks</p>
+                                    <p class="metric-value" id="totalTasks">0</p>
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <div class="metric-icon bg-success">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div>
+                                    <p class="metric-label">Completed</p>
+                                    <p class="metric-value" id="completedTasks">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-header">
+                                <div class="metric-icon bg-warning">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <p class="metric-label">Pending</p>
+                                    <p class="metric-value" id="pendingTasks">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                        <!-- Tasks Content -->
-                        <div id="tasksContent" class="content-section hidden fade-in">
-                            <div class="page-header">
-                                <h1 class="page-title">Today's Tasks</h1>
-                                <button onclick="showAddTaskModal()" class="btn btn-primary">
+                    <!-- Quick Add Task -->
+                    <div class="card">
+                        <h3 class="card-title">Quick Add Task</h3>
+                        <form id="quickAddForm" class="quick-add-form">
+                            <div class="input-group">
+                                <input type="text" id="quickTaskTitle" placeholder="Enter task title..." 
+                                       class="task-input">
+                                <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-plus"></i>
                                     <span>Add Task</span>
                                 </button>
                             </div>
+                        </form>
+                    </div>
 
-                            <div class="card">
-                                <div id="tasksList" class="tasks-list">
-                                    <p class="text-gray-500 text-center">No tasks found.</p>
-                                </div>
+                    <!-- Recent Tasks -->
+                    <div class="card">
+                        <h3 class="card-title">Recent Tasks</h3>
+                        <div id="recentTasks" class="tasks-list">
+                            <p class="text-gray-500 text-center">No tasks yet. Add your first task above!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks Section -->
+            <div id="tasksSection" class="section" style="display: none;">
+                <div class="container">
+                    <div class="page-header">
+                        <h1 class="page-title">Today's Tasks</h1>
+                        <button onclick="showAddTaskModal()" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            <span>Add Task</span>
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div id="tasksList" class="tasks-list">
+                            <p class="text-gray-500 text-center">No tasks found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed Section -->
+            <div id="completedSection" class="section" style="display: none;">
+                <div class="container">
+                    <div class="page-header">
+                        <h1 class="page-title">Completed Tasks</h1>
+                    </div>
+
+                    <div class="card">
+                        <div id="completedList" class="tasks-list">
+                            <p class="text-gray-500 text-center">No completed tasks found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div id="historySection" class="section" style="display: none;">
+                <div class="container">
+                    <div class="page-header">
+                        <h1 class="page-title">Task History</h1>
+                    </div>
+
+                    <div class="card">
+                        <div id="historyList" class="tasks-list">
+                            <p class="text-gray-500 text-center">No task history found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Section -->
+            <div id="analyticsSection" class="section" style="display: none;">
+                <div class="container">
+                    <div class="page-header">
+                        <h1 class="page-title">Analytics</h1>
+                    </div>
+                    
+                    <div class="grid grid-cols-2">
+                        <div class="card">
+                            <h3 class="card-title">Task Status</h3>
+                            <div class="chart-container">
+                                <canvas id="statusChart"></canvas>
                             </div>
                         </div>
-
-                        <!-- Completed Tasks Content -->
-                        <div id="completedContent" class="content-section hidden fade-in">
-                            <div class="page-header">
-                                <h1 class="page-title">Completed Tasks</h1>
-                            </div>
-
-                            <div class="card">
-                                <div id="completedList" class="tasks-list">
-                                    <p class="text-gray-500 text-center">No completed tasks found.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- History Content -->
-                        <div id="historyContent" class="content-section hidden fade-in">
-                            <div class="page-header">
-                                <h1 class="page-title">Task History</h1>
-                            </div>
-
-                            <div class="card">
-                                <div id="historyList" class="tasks-list">
-                                    <p class="text-gray-500 text-center">No task history found.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Analytics Content -->
-                        <div id="analyticsContent" class="content-section hidden fade-in">
-                            <div class="page-header">
-                                <h1 class="page-title">Analytics</h1>
-                            </div>
-                            
-                            <div class="grid grid-cols-2">
-                                <div class="card">
-                                    <h3 class="card-title">Task Status</h3>
-                                    <div class="chart-container">
-                                        <canvas id="statusChart"></canvas>
-                                    </div>
-                                </div>
-                                
-                                <div class="card">
-                                    <h3 class="card-title">Weekly Progress</h3>
-                                    <div class="chart-container">
-                                        <canvas id="weeklyChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Settings Content -->
-                        <div id="settingsContent" class="content-section hidden fade-in">
-                            <div class="page-header">
-                                <h1 class="page-title">Settings</h1>
-                            </div>
-                            
-                            <div class="settings-grid">
-                                <!-- Profile Settings -->
-                                <div class="card">
-                                    <h3 class="card-title">Profile Settings</h3>
-                                    <form id="profileForm" class="settings-form">
-                                        <div class="form-group">
-                                            <label class="form-label">Current Username</label>
-                                            <input type="text" id="currentUsername" class="form-input" readonly>
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label class="form-label">New Username</label>
-                                            <input type="text" id="newUsername" class="form-input" placeholder="Enter new username">
-                                        </div>
-                                        
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-save"></i>
-                                            <span>Update Username</span>
-                                        </button>
-                                    </form>
-                                </div>
-
-                                <!-- Password Settings -->
-                                <div class="card">
-                                    <h3 class="card-title">Password Settings</h3>
-                                    <form id="passwordForm" class="settings-form">
-                                        <div class="form-group">
-                                            <label class="form-label">Old Password</label>
-                                            <div class="input-with-icon">
-                                                <i class="fas fa-lock input-icon"></i>
-                                                <input type="password" id="oldPassword" class="form-input" placeholder="Enter old password">
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label class="form-label">New Password</label>
-                                            <div class="input-with-icon">
-                                                <i class="fas fa-lock input-icon"></i>
-                                                <input type="password" id="newPassword" class="form-input" placeholder="Enter new password">
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label class="form-label">Confirm Password</label>
-                                            <div class="input-with-icon">
-                                                <i class="fas fa-lock input-icon"></i>
-                                                <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm new password">
-                                            </div>
-                                        </div>
-                                        
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-key"></i>
-                                            <span>Change Password</span>
-                                        </button>
-                                    </form>
-                                </div>
+                        
+                        <div class="card">
+                            <h3 class="card-title">Weekly Progress</h3>
+                            <div class="chart-container">
+                                <canvas id="weeklyChart"></canvas>
                             </div>
                         </div>
                     </div>
-                </main>
+                </div>
             </div>
-        </div>
+
+            <!-- Settings Section -->
+            <div id="settingsSection" class="section" style="display: none;">
+                <div class="container">
+                    <div class="page-header">
+                        <h1 class="page-title">Settings</h1>
+                    </div>
+                    
+                    <div class="settings-grid">
+                        <!-- Profile Settings -->
+                        <div class="card">
+                            <h3 class="card-title">Profile Settings</h3>
+                            <form id="profileForm" class="settings-form">
+                                <div class="form-group">
+                                    <label class="form-label">Current Username</label>
+                                    <input type="text" id="currentUsername" class="form-input" readonly>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">New Username</label>
+                                    <input type="text" id="newUsername" class="form-input" placeholder="Enter new username">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    <span>Update Username</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Password Settings -->
+                        <div class="card">
+                            <h3 class="card-title">Password Settings</h3>
+                            <form id="passwordForm" class="settings-form">
+                                <div class="form-group">
+                                    <label class="form-label">Old Password</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-lock input-icon"></i>
+                                        <input type="password" id="oldPassword" class="form-input" placeholder="Enter old password">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">New Password</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-lock input-icon"></i>
+                                        <input type="password" id="newPassword" class="form-input" placeholder="Enter new password">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Confirm Password</label>
+                                    <div class="input-with-icon">
+                                        <i class="fas fa-lock input-icon"></i>
+                                        <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm new password">
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-key"></i>
+                                    <span>Change Password</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script src="script.js"></script>

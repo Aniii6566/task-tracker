@@ -6,14 +6,14 @@ let currentPage = 'dashboard';
 // API Configuration (fallback to localStorage if backend not available)
 const API_BASE = 'https://task-tracker-vr1u.onrender.com/api';
 
-// ===== CRITICAL: FIX EVENT BINDING =====
+// ===== CRITICAL: FIX EVENT RE-BINDING ISSUE =====
 document.addEventListener('DOMContentLoaded', () => {
     console.log('App initializing...');
     initializeAuthSystem();
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
     
-    // Initialize all event listeners
+    // Initialize all event listeners - CRITICAL: Do NOT re-render HTML that removes listeners
     initializeEventListeners();
 });
 
@@ -29,6 +29,7 @@ function initializeAuthSystem() {
         currentUser = JSON.parse(savedUser);
         console.log('User already logged in:', currentUser.username);
         showSection('dashboardSection');
+        loadDashboard();
     } else {
         console.log('No user logged in, showing login');
         showSection('loginSection');
@@ -45,13 +46,45 @@ function initializeAuthSystem() {
     }
 }
 
-// ===== CRITICAL: FIX NAVIGATION SYSTEM =====
+// ===== CRITICAL: CENTRAL NAVIGATION SYSTEM (MOST IMPORTANT) =====
 function showSection(id) {
     console.log('Showing section:', id);
+    
+    // Hide all sections
     document.querySelectorAll(".section").forEach(sec => {
         sec.style.display = "none";
     });
-    document.getElementById(id).style.display = "block";
+
+    // Show the active section
+    const active = document.getElementById(id);
+    if (active) {
+        active.style.display = "block";
+        console.log('Section found and displayed:', id);
+    } else {
+        console.error('Section not found:', id);
+    }
+
+    // CRITICAL: Scroll to top
+    window.scrollTo(0, 0);
+    
+    // Update active nav button
+    updateActiveNav(id);
+}
+
+// Update active navigation button
+function updateActiveNav(sectionId) {
+    // Remove active class from all nav buttons
+    const navButtons = document.querySelectorAll('.nav-btn');
+    navButtons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Add active class to corresponding button
+    const pageName = sectionId.replace('Section', '');
+    const activeBtn = document.querySelector(`[data-page="${pageName}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
 }
 
 // Auth screen navigation
@@ -390,7 +423,6 @@ function showDashboard() {
     showSection('dashboardSection');
     currentPage = 'dashboard';
     closeSidebar();
-    setActiveNav('dashboard');
     updateSidebarUsername();
     loadDashboard();
 }
@@ -418,80 +450,44 @@ function updateSidebarUsername() {
 
 // ===== NAVIGATION FUNCTIONS =====
 
-// Set active navigation button
-function setActiveNav(pageName) {
-    console.log('Setting active nav:', pageName);
-    
-    // Remove active class from all nav buttons
-    const navButtons = document.querySelectorAll('.nav-btn');
-    navButtons.forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Add active class to current page button
-    const activeBtn = document.querySelector(`[data-page="${pageName}"]`);
-    if (activeBtn) {
-        activeBtn.classList.add('active');
-    }
+// Dashboard navigation
+function navigateToDashboard() {
+    console.log('Dashboard navigation clicked');
+    showDashboard();
 }
 
-// Show/hide content sections
-function showContentSection(sectionId) {
-    console.log('Showing content section:', sectionId);
-    
-    // Hide all content sections
-    const sections = document.querySelectorAll('.content-section');
-    sections.forEach(section => {
-        section.classList.add('hidden');
-    });
-    
-    // Show the requested section
-    const targetSection = document.getElementById(sectionId);
-    if (targetSection) {
-        targetSection.classList.remove('hidden');
-    } else {
-        console.error('Content section not found:', sectionId);
-    }
-}
-
-// Navigation functions
-function showTasks() {
-    currentPage = 'tasks';
-    showContentSection('tasksContent');
-    setActiveNav('tasks');
-    closeSidebar();
+// Tasks navigation
+function navigateToTasks() {
+    console.log('Tasks navigation clicked');
+    showSection('tasksSection');
     loadTasks();
 }
 
-function showCompletedTasks() {
-    currentPage = 'completed';
-    showContentSection('completedContent');
-    setActiveNav('completed');
-    closeSidebar();
+// Completed navigation
+function navigateToCompleted() {
+    console.log('Completed navigation clicked');
+    showSection('completedSection');
     loadCompletedTasks();
 }
 
-function showHistory() {
-    currentPage = 'history';
-    showContentSection('historyContent');
-    setActiveNav('history');
-    closeSidebar();
+// History navigation
+function navigateToHistory() {
+    console.log('History navigation clicked');
+    showSection('historySection');
     loadHistory();
 }
 
-function showAnalytics() {
-    currentPage = 'analytics';
-    showContentSection('analyticsContent');
-    setActiveNav('analytics');
-    closeSidebar();
+// Analytics navigation
+function navigateToAnalytics() {
+    console.log('Analytics navigation clicked');
+    showSection('analyticsSection');
     loadAnalytics();
 }
 
-function showSettings() {
-    currentPage = 'settings';
-    showContentSection('settingsContent');
-    setActiveNav('settings');
-    closeSidebar();
+// Settings navigation
+function navigateToSettings() {
+    console.log('Settings navigation clicked');
+    showSection('settingsSection');
     loadSettings();
 }
 
@@ -1080,7 +1076,7 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// ===== CRITICAL: FIX EVENT BINDING =====
+// ===== CRITICAL: FIX ALL NAV BUTTONS =====
 function initializeEventListeners() {
     console.log('Initializing event listeners...');
     
@@ -1093,7 +1089,7 @@ function initializeEventListeners() {
         console.error('Login button not found');
     }
     
-    // CRITICAL: FIX CREATE ACCOUNT BUTTON
+    // Create Account button
     const signupBtn = document.getElementById('signupBtn');
     if (signupBtn) {
         signupBtn.addEventListener('click', function() {
@@ -1105,7 +1101,7 @@ function initializeEventListeners() {
         console.error('Create Account button not found');
     }
     
-    // CRITICAL: FIX FORGOT PASSWORD BUTTON
+    // Forgot Password button
     const forgotBtn = document.getElementById('forgotBtn');
     if (forgotBtn) {
         forgotBtn.addEventListener('click', function() {
@@ -1154,53 +1150,79 @@ function initializeEventListeners() {
         console.log('Back to Login button 2 listener attached');
     }
     
-    // CRITICAL: FIX DASHBOARD BUTTON
+    // CRITICAL: FIX ALL NAV BUTTONS WITH PROPER SECTION MAPPING
     const dashboardBtn = document.getElementById('dashboardBtn');
     if (dashboardBtn) {
         dashboardBtn.addEventListener('click', function() {
             console.log('Dashboard button clicked');
-            showDashboard();
+            navigateToDashboard();
         });
         console.log('Dashboard button listener attached');
     } else {
         console.error('Dashboard button not found');
     }
     
-    // Sidebar navigation buttons
     const tasksBtn = document.getElementById('tasksBtn');
     if (tasksBtn) {
-        tasksBtn.addEventListener('click', showTasks);
+        tasksBtn.addEventListener('click', function() {
+            console.log('Tasks button clicked');
+            navigateToTasks();
+        });
         console.log('Tasks button listener attached');
+    } else {
+        console.error('Tasks button not found');
     }
     
     const completedBtn = document.getElementById('completedBtn');
     if (completedBtn) {
-        completedBtn.addEventListener('click', showCompletedTasks);
+        completedBtn.addEventListener('click', function() {
+            console.log('Completed button clicked');
+            navigateToCompleted();
+        });
         console.log('Completed button listener attached');
+    } else {
+        console.error('Completed button not found');
     }
     
     const historyBtn = document.getElementById('historyBtn');
     if (historyBtn) {
-        historyBtn.addEventListener('click', showHistory);
+        historyBtn.addEventListener('click', function() {
+            console.log('History button clicked');
+            navigateToHistory();
+        });
         console.log('History button listener attached');
+    } else {
+        console.error('History button not found');
     }
     
     const analyticsBtn = document.getElementById('analyticsBtn');
     if (analyticsBtn) {
-        analyticsBtn.addEventListener('click', showAnalytics);
+        analyticsBtn.addEventListener('click', function() {
+            console.log('Analytics button clicked');
+            navigateToAnalytics();
+        });
         console.log('Analytics button listener attached');
+    } else {
+        console.error('Analytics button not found');
     }
     
     const settingsBtn = document.getElementById('settingsBtn');
     if (settingsBtn) {
-        settingsBtn.addEventListener('click', showSettings);
+        settingsBtn.addEventListener('click', function() {
+            console.log('Settings button clicked');
+            navigateToSettings();
+        });
         console.log('Settings button listener attached');
+    } else {
+        console.error('Settings button not found');
     }
     
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', logout);
         console.log('Logout button listener attached');
+    } else {
+        console.error('Logout button not found');
     }
     
     // App forms
@@ -1227,6 +1249,8 @@ function initializeEventListeners() {
     } else {
         console.error('Password form not found');
     }
+    
+    console.log('All event listeners initialized successfully');
 }
 
 // Debug function
@@ -1246,6 +1270,10 @@ window.debugTaskTracker = function() {
     const signupBtn = document.getElementById('signupBtn');
     const forgotBtn = document.getElementById('forgotBtn');
     const dashboardBtn = document.getElementById('dashboardBtn');
+    const tasksBtn = document.getElementById('tasksBtn');
+    const completedBtn = document.getElementById('completedBtn');
+    const analyticsBtn = document.getElementById('analyticsBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     
@@ -1254,6 +1282,10 @@ window.debugTaskTracker = function() {
     console.log('Create Account button:', signupBtn ? 'found' : 'NOT FOUND');
     console.log('Forgot Password button:', forgotBtn ? 'found' : 'NOT FOUND');
     console.log('Dashboard button:', dashboardBtn ? 'found' : 'NOT FOUND');
+    console.log('Tasks button:', tasksBtn ? 'found' : 'NOT FOUND');
+    console.log('Completed button:', completedBtn ? 'found' : 'NOT FOUND');
+    console.log('Analytics button:', analyticsBtn ? 'found' : 'NOT FOUND');
+    console.log('Settings button:', settingsBtn ? 'found' : 'NOT FOUND');
     console.log('Username input:', usernameInput ? 'found' : 'NOT FOUND');
     console.log('Password input:', passwordInput ? 'found' : 'NOT FOUND');
     
@@ -1269,6 +1301,13 @@ window.debugTaskTracker = function() {
         console.log('Password input disabled:', passwordInput.disabled);
         console.log('Password input readonly:', passwordInput.readOnly);
     }
+    
+    // Check sections
+    const sections = ['loginSection', 'signupSection', 'forgotSection', 'dashboardSection', 'tasksSection', 'completedSection', 'historySection', 'analyticsSection', 'settingsSection'];
+    sections.forEach(sectionId => {
+        const section = document.getElementById(sectionId);
+        console.log(`${sectionId}:`, section ? 'found' : 'NOT FOUND', section ? `display: ${section.style.display}` : '');
+    });
     
     console.log('=== END DEBUG ===');
 };
