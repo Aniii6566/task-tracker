@@ -71,20 +71,26 @@
                             <h2 class="text-lg font-bold text-white">TaskTracker</h2>
                         </div>
 
-                        <nav class="space-y-2">
-                            <button onclick="showDashboard()" class="btn btn-secondary w-full text-left">
+                        <nav class="sidebar-nav">
+                            <button onclick="showDashboard()" class="nav-btn active" data-page="dashboard">
                                 <i class="fas fa-home mr-3"></i>Dashboard
                             </button>
-                            <button onclick="showTasks()" class="btn btn-secondary w-full text-left">
-                                <i class="fas fa-tasks mr-3"></i>Tasks
+                            <button onclick="showTasks()" class="nav-btn" data-page="tasks">
+                                <i class="fas fa-tasks mr-3"></i>Today's Tasks
                             </button>
-                            <button onclick="showAnalytics()" class="btn btn-secondary w-full text-left">
+                            <button onclick="showCompletedTasks()" class="nav-btn" data-page="completed">
+                                <i class="fas fa-check mr-3"></i>Completed Tasks
+                            </button>
+                            <button onclick="showHistory()" class="nav-btn" data-page="history">
+                                <i class="fas fa-history mr-3"></i>History
+                            </button>
+                            <button onclick="showAnalytics()" class="nav-btn" data-page="analytics">
                                 <i class="fas fa-chart-bar mr-3"></i>Analytics
                             </button>
-                            <button onclick="showSettings()" class="btn btn-secondary w-full text-left">
+                            <button onclick="showSettings()" class="nav-btn" data-page="settings">
                                 <i class="fas fa-cog mr-3"></i>Settings
                             </button>
-                            <button onclick="logout()" class="btn btn-danger w-full text-left mt-8">
+                            <button onclick="logout()" class="nav-btn logout-btn">
                                 <i class="fas fa-sign-out-alt mr-3"></i>Logout
                             </button>
                         </nav>
@@ -95,7 +101,7 @@
                 <main class="main-content" id="mainContent">
                     <div class="container">
                         <!-- Dashboard Content -->
-                        <div id="dashboardContent" class="fade-in">
+                        <div id="dashboardContent" class="content-section fade-in">
                             <!-- Header -->
                             <div class="dashboard-header">
                                 <h1 class="dashboard-title">Dashboard</h1>
@@ -164,9 +170,9 @@
                         </div>
 
                         <!-- Tasks Content -->
-                        <div id="tasksContent" class="hidden fade-in">
+                        <div id="tasksContent" class="content-section hidden fade-in">
                             <div class="page-header">
-                                <h1 class="page-title">Tasks</h1>
+                                <h1 class="page-title">Today's Tasks</h1>
                                 <button onclick="showAddTaskModal()" class="btn btn-primary">
                                     <i class="fas fa-plus mr-2"></i>Add Task
                                 </button>
@@ -179,8 +185,34 @@
                             </div>
                         </div>
 
+                        <!-- Completed Tasks Content -->
+                        <div id="completedContent" class="content-section hidden fade-in">
+                            <div class="page-header">
+                                <h1 class="page-title">Completed Tasks</h1>
+                            </div>
+
+                            <div class="card">
+                                <div id="completedList" class="tasks-list">
+                                    <p class="text-gray-500 text-center">No completed tasks found.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- History Content -->
+                        <div id="historyContent" class="content-section hidden fade-in">
+                            <div class="page-header">
+                                <h1 class="page-title">Task History</h1>
+                            </div>
+
+                            <div class="card">
+                                <div id="historyList" class="tasks-list">
+                                    <p class="text-gray-500 text-center">No task history found.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Analytics Content -->
-                        <div id="analyticsContent" class="hidden fade-in">
+                        <div id="analyticsContent" class="content-section hidden fade-in">
                             <div class="page-header">
                                 <h1 class="page-title">Analytics</h1>
                             </div>
@@ -188,39 +220,66 @@
                             <div class="grid grid-cols-2">
                                 <div class="card">
                                     <h3 class="card-title">Task Status</h3>
-                                    <canvas id="statusChart"></canvas>
+                                    <div class="chart-container">
+                                        <canvas id="statusChart"></canvas>
+                                    </div>
                                 </div>
                                 
                                 <div class="card">
                                     <h3 class="card-title">Weekly Progress</h3>
-                                    <canvas id="weeklyChart"></canvas>
+                                    <div class="chart-container">
+                                        <canvas id="weeklyChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Settings Content -->
-                        <div id="settingsContent" class="hidden fade-in">
+                        <div id="settingsContent" class="content-section hidden fade-in">
                             <div class="page-header">
                                 <h1 class="page-title">Settings</h1>
                             </div>
                             
-                            <div class="card max-w-lg">
-                                <h3 class="card-title">Profile</h3>
-                                <form id="profileForm" class="space-y-6">
-                                    <div class="form-group">
-                                        <label class="form-label">Name</label>
-                                        <input type="text" id="userName" class="form-input">
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label class="form-label">Email</label>
-                                        <input type="email" id="userEmail" class="form-input" readonly>
-                                    </div>
-                                    
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save mr-2"></i>Save Changes
-                                    </button>
-                                </form>
+                            <div class="settings-grid">
+                                <!-- Profile Settings -->
+                                <div class="card">
+                                    <h3 class="card-title">Profile Settings</h3>
+                                    <form id="profileForm" class="settings-form">
+                                        <div class="form-group">
+                                            <label class="form-label">Username</label>
+                                            <input type="text" id="userName" class="form-input" placeholder="Enter username">
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save mr-2"></i>Update Username
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <!-- Password Settings -->
+                                <div class="card">
+                                    <h3 class="card-title">Password Settings</h3>
+                                    <form id="passwordForm" class="settings-form">
+                                        <div class="form-group">
+                                            <label class="form-label">Old Password</label>
+                                            <input type="password" id="oldPassword" class="form-input" placeholder="Enter old password">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">New Password</label>
+                                            <input type="password" id="newPassword" class="form-input" placeholder="Enter new password">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label class="form-label">Confirm Password</label>
+                                            <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm new password">
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-key mr-2"></i>Change Password
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
