@@ -1,189 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Activity Tracker - Professional Dashboard</title>
-    <h1 style="color:red;">DEPLOY TEST</h1>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css">
+  <title>Task Tracker</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Auth Container -->
-    <div id="authContainer">
-        <!-- Login Section -->
-        <div id="loginSection" class="section">
-                <div class="auth-container">
-                    <div class="auth-card">
-                        <div class="text-center mb-8">
-                            <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-tasks text-3xl text-white"></i>
-                            </div>
-                            <h1 class="text-3xl font-bold mb-2">TaskTracker Pro</h1>
-                            <p class="text-gray-400">Professional Task Management</p>
-                        </div>
 
-                        <form id="loginForm" class="space-y-6" novalidate>
-                            <div class="form-group">
-                                <label class="form-label">Username</label>
-                                <div class="input-with-icon">
-                                    <i class="fas fa-user input-icon"></i>
-                                    <input type="text" id="username" placeholder="Enter your username"
-                                           class="form-input" autocomplete="username">
-                                </div>
-                            </div>
+<!-- LOGIN -->
+<div id="authContainer">
+  <div class="auth-card">
+    <h2>TaskTracker Pro</h2>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <button id="loginBtn">Sign In</button>
+    <button id="createAccountBtn">Create Account</button>
+  </div>
+</div>
 
-                            <div class="form-group">
-                                <label class="form-label">Password</label>
-                                <div class="input-with-icon">
-                                    <i class="fas fa-lock input-icon"></i>
-                                    <input type="password" id="password" placeholder="Enter your password"
-                                           class="form-input" autocomplete="current-password">
-                                </div>
-                            </div>
+<!-- APP -->
+<div id="appContainer" style="display:none;">
+  <div class="sidebar">
+    <h3>Dashboard</h3>
+    <button onclick="logout()">Logout</button>
+  </div>
+  <div class="main">
+    <h1>Dashboard</h1>
+    <input id="taskInput" placeholder="Enter task">
+    <button id="addTaskBtn">Add Task</button>
+    <ul id="taskList"></ul>
+  </div>
+</div>
 
-                            <div id="loginError" class="error-message hidden">
-                                <i class="fas fa-exclamation-circle mr-2"></i>
-                                <span id="loginErrorText">Invalid username or password</span>
-                            </div>
-
-                            <button type="button" id="loginBtn" class="btn btn-primary w-full">
-                                <span class="btn-text">Sign In</span>
-                                <div class="loading hidden"></div>
-                            </button>
-                        </form>
-
-                        <div class="auth-links">
-                            <button type="button" id="signupBtn" class="btn btn-secondary w-full">
-                                <i class="fas fa-user-plus mr-2"></i>Create Account
-                            </button>
-                            <button type="button" id="forgotBtn" class="btn btn-secondary w-full">
-                                <i class="fas fa-key mr-2"></i>Forgot Password?
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Signup Section -->
-            <div id="signupSection" class="section" style="display: none;">
-                <div class="auth-container">
-                    <div class="auth-card">
-                        <div class="text-center mb-8">
-                            <div class="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-user-plus text-3xl text-white"></i>
-                            </div>
-    </div>
-
-    <!-- App Container -->
-    <div id="appContainer" style="display: none;">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h3>Task Tracker</h3>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-section="dashboard">Dashboard</a>
-                <a href="#" class="nav-item" data-section="tasks">Tasks</a>
-                <a href="#" class="nav-item" data-section="analytics">Analytics</a>
-            </nav>
-            <div class="sidebar-footer">
-                <button id="logoutBtn">Logout</button>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Dashboard Section -->
-            <section id="dashboardSection" class="content-section">
-                <div class="section-header">
-                    <h1>Dashboard</h1>
-                </div>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Total Tasks</h3>
-                        <p id="totalTasks">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Completed</h3>
-                        <p id="completedTasks">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Pending</h3>
-                        <p id="pendingTasks">0</p>
-                    </div>
-                </div>
-
-                <div class="task-section">
-                    <h2>Add Task</h2>
-                    <div class="add-task-form">
-                        <input type="text" id="taskInput" placeholder="Enter task">
-                        <button id="addTaskBtn">Add Task</button>
-                    </div>
-                    
-                    <h3>Tasks</h3>
-                    <ul id="taskList"></ul>
-                </div>
-            </section>
-
-            <!-- Tasks Section -->
-            <section id="tasksSection" class="content-section" style="display: none;">
-                <div class="section-header">
-                    <h1>All Tasks</h1>
-                </div>
-                <ul id="allTasksList"></ul>
-            </section>
-
-            <!-- Analytics Section -->
-            <section id="analyticsSection" class="content-section" style="display: none;">
-                <div class="section-header">
-                    <h1>Analytics</h1>
-                </div>
-                <div class="analytics-content">
-                    <p>Task analytics coming soon...</p>
-                            <h3 class="card-title">Password Settings</h3>
-                            <form id="passwordForm" class="settings-form">
-                                <div class="form-group">
-                                    <label class="form-label">Old Password</label>
-                                    <div class="input-with-icon">
-                                        <i class="fas fa-lock input-icon"></i>
-                                        <input type="password" id="oldPassword" class="form-input" placeholder="Enter old password">
-                                    </div>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">New Password</label>
-                                    <div class="input-with-icon">
-                                        <i class="fas fa-lock input-icon"></i>
-                                        <input type="password" id="newPassword" class="form-input" placeholder="Enter new password">
-                                    </div>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">Confirm Password</label>
-                                    <div class="input-with-icon">
-                                        <i class="fas fa-lock input-icon"></i>
-                                        <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm new password">
-                                    </div>
-                                </div>
-                                
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-key"></i>
-                                    <span>Change Password</span>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
