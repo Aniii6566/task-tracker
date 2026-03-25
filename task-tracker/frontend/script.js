@@ -1,23 +1,103 @@
-console.log("APP LOADED SUCCESSFULLY");
+console.log("APP LOADED");
 
-// Global variables
-let tasks = []; // Removed comment
-let currentUser = null; // Removed comment
-let currentPage = 'dashboard'; // Removed comment
+// ===== LOGIN SYSTEM =====
 
-// API Configuration (fallback to localStorage if backend not available)
-const API_BASE = 'https://task-tracker-vr1u.onrender.com/api';
+// Initialize users if not exists
+if (!localStorage.getItem("users")) {
+    const defaultUsers = {
+        "admin": "admin123",
+        "demo": "demo123"
+    };
+    localStorage.setItem("users", JSON.stringify(defaultUsers));
+}
 
-// ===== CRITICAL: FIX EVENT RE-BINDING ISSUE =====
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('App initializing...');
-    initializeAuthSystem();
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
+// Login function
+function loginUser() {
+    const usernameInput = document.querySelector("#username");
+    const passwordInput = document.querySelector("#password");
     
-    // Initialize all event listeners - CRITICAL: Do NOT re-render HTML that removes listeners
-    initializeEventListeners();
-});
+    if (!usernameInput || !passwordInput) {
+        alert("Login form not found");
+        return;
+    }
+    
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username || !password) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    let users = JSON.parse(localStorage.getItem("users")) || {};
+
+    if (!users[username]) {
+        alert("User not found");
+        return;
+    }
+
+    if (users[username] !== password) {
+        alert("Wrong password");
+        return;
+    }
+
+    localStorage.setItem("currentUser", username);
+    showApp();
+    renderTasks();
+    updateDashboard();
+    console.log("✅ Login successful:", username);
+}
+
+// Create account function
+function createAccount() {
+    const usernameInput = document.querySelector("#username");
+    const passwordInput = document.querySelector("#password");
+    
+    if (!usernameInput || !passwordInput) {
+        alert("Create account form not found");
+        return;
+    }
+    
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!username || !password) {
+        alert("Please fill all fields");
+        return;
+    }
+
+    let users = JSON.parse(localStorage.getItem("users")) || {};
+
+    if (users[username]) {
+        alert("User already exists");
+        return;
+    }
+
+    users[username] = password;
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Account created successfully");
+    console.log("✅ Account created:", username);
+}
+
+// ===== AUTH SWITCHING =====
+
+function showApp() {
+    const authContainer = document.getElementById("authContainer");
+    const appContainer = document.getElementById("appContainer");
+    
+    if (authContainer) authContainer.style.display = "none";
+    if (appContainer) appContainer.style.display = "block";
+    console.log("✅ Showing App - Auth hidden, App visible");
+}
+
+function showAuth() {
+    const authContainer = document.getElementById("authContainer");
+    const appContainer = document.getElementById("appContainer");
+    
+    if (authContainer) authContainer.style.display = "flex";
+    if (appContainer) appContainer.style.display = "none";
+    console.log("✅ Showing Auth - App hidden, Auth visible");
+}
 
 // Load history for specific date
 function loadHistoryForDate() {
@@ -25,7 +105,7 @@ function loadHistoryForDate() {
     const selectedDate = dateInput.value;
     
     if (!selectedDate) {
-        showNotification('Please select a date', 'error');
+        alert('Please select a date');
         return;
     }
     
@@ -35,13 +115,7 @@ function loadHistoryForDate() {
     const container = document.getElementById('historyList');
     
     if (tasksForDate.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📅</div>
-                <div class="empty-state-text">No tasks found for ${selectedDate}</div>
-                <div class="empty-state-subtext">Try selecting a different date</div>
-            </div>
-        `;
+        container.innerHTML = '<li style="color: #94a3b8; text-align: center; padding: 2rem;">No tasks found for this date</li>';
         return;
     }
     
@@ -50,30 +124,23 @@ function loadHistoryForDate() {
     const pending = tasksForDate.filter(t => t.status === 'pending');
     
     container.innerHTML = `
-        <div class="history-summary">
-            <h3>Tasks for ${selectedDate}</h3>
-            <div class="summary-stats">
-                <span class="badge status-completed">✔ ${completed.length} Completed</span>
-                <span class="badge status-missed">✖ ${missed.length} Missed</span>
-                <span class="badge status-pending">⏳ ${pending.length} Pending</span>
+        <div style="margin-bottom: 1rem;">
+            <h4>Tasks for ${selectedDate}</h4>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px;">✔ ${completed.length} Completed</span>
+                <span style="background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px;">✖ ${missed.length} Missed</span>
+                <span style="background: #6b7280; color: white; padding: 4px 8px; border-radius: 4px;">⏳ ${pending.length} Pending</span>
             </div>
         </div>
-        <div class="tasks-list">
-            ${tasksForDate.map(task => {
-                const statusInfo = getTaskStatusInfo(task.status);
-                return `
-                    <div class="task-item">
-                        <div class="task-content">
-                            <div class="task-title">${task.title}</div>
-                        </div>
-                        <div class="task-actions">
-                            <span class="badge ${statusInfo.class}" style="color: ${statusInfo.color}">
-                                ${statusInfo.icon} ${task.status}
-                            </span>
-                        </div>
-                    </div>
-                `;
-            }).join('')}
+        <div>
+            ${tasksForDate.map(task => `
+                <li style="background: #334155; padding: 1rem; margin-bottom: 0.5rem; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="${task.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${task.title}</span>
+                    <span style="background: ${task.status === 'completed' ? '#10b981' : task.status === 'missed' ? '#ef4444' : '#6b7280'}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">
+                        ${task.status}
+                    </span>
+                </li>
+            `).join('')}
         </div>
     `;
 }
@@ -578,54 +645,232 @@ function handleForgotPassword() {
                 showNotification('Password reset successfully! Please login with your new password.', 'success');
                 
                 // Switch to login screen
-    const passwordInput = document.getElementById('password');
+                setTimeout(() => {
+                    showLogin();
+                }, 1500);
+            }
+        } catch (error) {
+            console.error('Password reset error:', error);
+            showAuthError('forgotError', 'An error occurred during password reset');
+            showNotification('Password reset error. Please try again.', 'error');
+        } finally {
+            // Reset button state
+            btnText.classList.remove('hidden');
+            loading.classList.add('hidden');
+            btn.disabled = false;
+        }
+    }, 1000);
+}
+
+// ===== TASK MANAGEMENT =====
+
+function addTask() {
+    const input = document.getElementById("taskInput");
+    const button = document.getElementById("addTaskBtn");
     
-    console.log('DOM elements check:');
-    console.log('Login button:', loginBtn ? 'found' : 'NOT FOUND');
-    console.log('Create Account button:', signupBtn ? 'found' : 'NOT FOUND');
-    console.log('Forgot Password button:', forgotBtn ? 'found' : 'NOT FOUND');
-    console.log('Dashboard button:', dashboardBtn ? 'found' : 'NOT FOUND');
-    console.log('Tasks button:', tasksBtn ? 'found' : 'NOT FOUND');
-    console.log('Completed button:', completedBtn ? 'found' : 'NOT FOUND');
-    console.log('Analytics button:', analyticsBtn ? 'found' : 'NOT FOUND');
-    console.log('Settings button:', settingsBtn ? 'found' : 'NOT FOUND');
-    console.log('Username input:', usernameInput ? 'found' : 'NOT FOUND');
-    console.log('Password input:', passwordInput ? 'found' : 'NOT FOUND');
-    
-    // Test input values and properties
-    if (usernameInput) {
-        console.log('Username input value:', usernameInput.value);
-        console.log('Username input disabled:', usernameInput.disabled);
-        console.log('Username input readonly:', usernameInput.readOnly);
+    if (!input || !button) {
+        console.log("Task input or button not found");
+        return;
     }
     
-    if (passwordInput) {
-        console.log('Password input value:', passwordInput.value);
-        console.log('Password input disabled:', passwordInput.disabled);
-        console.log('Password input readonly:', passwordInput.readOnly);
+    const value = input.value.trim();
+    if (!value) return;
+
+    const user = localStorage.getItem("currentUser");
+    if (!user) {
+        alert("Please login to add tasks");
+        return;
     }
-    
-    // Check sections
-    const sections = ['loginSection', 'signupSection', 'forgotSection', 'dashboardSection', 'tasksSection', 'completedSection', 'historySection', 'analyticsSection', 'settingsSection'];
-    sections.forEach(sectionId => {
-        const section = document.getElementById(sectionId);
-        console.log(`${sectionId}:`, section ? 'found' : 'NOT FOUND', section ? `display: ${section.style.display}` : '');
+
+    const today = new Date().toISOString().split("T")[0];
+
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
+
+    if (!tasks[user]) tasks[user] = {};
+    if (!tasks[user][today]) tasks[user][today] = [];
+
+    tasks[user][today].push({
+        title: value,
+        completed: false
     });
+
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+
+    input.value = "";
+    renderTasks();
+    updateDashboard();
+    console.log("✅ Task added:", value);
+}
+
+function renderTasks() {
+    const user = localStorage.getItem("currentUser");
+    if (!user) return;
+
+    const today = new Date().toISOString().split("T")[0];
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
+    let list = document.getElementById("taskList");
+
+    if (!list) return;
+
+    list.innerHTML = "";
+
+    const todayTasks = tasks[user]?.[today] || [];
     
-    // Show user-specific data separation
-    if (currentUser) {
-        console.log('=== USER-SPECIFIC DATA ===');
-        console.log(`${currentUser} has ${getCurrentUserTasks().length} tasks`);
-        console.log('Sample tasks:', getCurrentUserTasks().slice(0, 3));
+    if (todayTasks.length === 0) {
+        list.innerHTML = '<li style="color: #94a3b8; text-align: center; padding: 2rem;">No tasks yet. Add your first task above!</li>';
+        return;
     }
+
+    todayTasks.forEach((task, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+            <span style="${task.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${task.title}</span>
+            <button onclick="toggleTask(${index})" style="margin-left: 10px; padding: 4px 8px; background: ${task.completed ? '#6b7280' : '#4ade80'}; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                ${task.completed ? 'Undo' : 'Complete'}
+            </button>
+        `;
+        list.appendChild(li);
+    });
+}
+
+function toggleTask(index) {
+    const user = localStorage.getItem("currentUser");
+    if (!user) return;
+
+    const today = new Date().toISOString().split("T")[0];
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
     
-    console.log('=== END DEBUG ===');
+    if (tasks[user]?.[today]) {
+        tasks[user][today][index].completed = !tasks[user][today][index].completed;
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        renderTasks();
+        updateDashboard();
+    }
+}
+
+function updateDashboard() {
+    const user = localStorage.getItem("currentUser");
+    if (!user) return;
+
+    const today = new Date().toISOString().split("T")[0];
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
+    let todayTasks = tasks[user]?.[today] || [];
+
+    const total = todayTasks.length;
+    const completed = todayTasks.filter(t => t.completed).length;
+    const pending = total - completed;
+
+    const totalEl = document.getElementById("totalTasks");
+    const completedEl = document.getElementById("completedTasks");
+    const pendingEl = document.getElementById("pendingTasks");
+
+    if (totalEl) totalEl.innerText = total;
+    if (completedEl) completedEl.innerText = completed;
+    if (pendingEl) pendingEl.innerText = pending;
+}
+
+function getCurrentUserTasks() {
+    const user = localStorage.getItem("currentUser");
+    if (!user) return [];
+    
+    const allTasks = JSON.parse(localStorage.getItem("tasks")) || {};
+    return allTasks[user] || [];
+}
+
+// ===== NAVIGATION =====
+
+function setupNavigation() {
+    const navItems = document.querySelectorAll(".nav-item");
+    const sections = document.querySelectorAll(".content-section");
+
+    navItems.forEach(item => {
+        item.addEventListener("click", (e) => {
+            e.preventDefault();
+            const targetSection = item.getAttribute("data-section");
+            
+            // Update active nav
+            navItems.forEach(nav => nav.classList.remove("active"));
+            item.classList.add("active");
+            
+            // Show target section
+            sections.forEach(section => section.style.display = "none");
+            
+            const targetEl = document.getElementById(targetSection);
+            if (targetEl) {
+                targetEl.style.display = "block";
+            }
+        });
+    });
+}
+
+// ===== INITIALIZATION =====
+
+window.onload = () => {
+    console.log("APP LOADED");
+
+    // Check if user is logged in
+    const currentUser = localStorage.getItem("currentUser");
+    if (currentUser) {
+        showApp();
+        renderTasks();
+        updateDashboard();
+    } else {
+        showAuth();
+    }
+
+    // Setup login button
+    const loginBtn = document.querySelector("#loginBtn");
+    if (loginBtn) {
+        loginBtn.addEventListener("click", loginUser);
+        console.log("✅ Login button attached");
+    }
+
+    // Setup create account button (if exists)
+    const createBtn = document.querySelector("#createAccountBtn");
+    if (createBtn) {
+        createBtn.addEventListener("click", createAccount);
+        console.log("✅ Create account button attached");
+    }
+
+    // Setup add task button
+    const addBtn = document.getElementById("addTaskBtn");
+    if (addBtn) {
+        addBtn.addEventListener("click", addTask);
+        console.log("✅ Add task button attached");
+    }
+
+    // Setup task input for Enter key
+    const taskInput = document.getElementById("taskInput");
+    if (taskInput) {
+        taskInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                addTask();
+            }
+        });
+    }
+
+    // Setup navigation
+    setupNavigation();
+
+    // Setup logout
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            if (confirm("Are you sure you want to logout?")) {
+                localStorage.removeItem("currentUser");
+                showAuth();
+                console.log("✅ Logged out successfully");
+            }
+        });
+    }
+
+    console.log("✅ All event listeners attached");
 };
 
-// Add debug shortcut
-document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-        e.preventDefault();
-        window.debugTaskTracker();
-    }
-});
+// ===== GLOBAL FUNCTIONS =====
+
+// Make functions globally accessible
+window.loginUser = loginUser;
+window.createAccount = createAccount;
+window.addTask = addTask;
+window.toggleTask = toggleTask;
