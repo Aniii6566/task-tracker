@@ -893,7 +893,7 @@ function renderWeeklyAnalytics() {
         const completedDays = weekData.filter(d => d.percentage === 100).length;
         
         analyticsContainer.innerHTML = `
-            <div class="dashboard-grid">
+            <div class="main-section">
                 <div class="weekly-card">
                     <div class="metric-header">
                         <div class="metric-icon bg-accent">
@@ -904,15 +904,16 @@ function renderWeeklyAnalytics() {
                             <p class="metric-value">${completedDays}/7 days</p>
                         </div>
                     </div>
-                    <div class="week-summary">
-                        ${weekData.map(day => `
-                            <div class="day-item">
-                                <span class="day-name">${day.dayName}</span>
-                                <span class="day-percentage" style="color: ${day.percentage === 100 ? '#10b981' : day.percentage > 0 ? '#f59e0b' : '#6b7280'}">
-                                    ${day.percentage}%
-                                </span>
-                            </div>
-                        `).join('')}
+                    <div class="weekly-days">
+                        ${weekData.map(day => {
+                            const statusClass = day.percentage === 100 ? 'completed' : day.percentage > 0 ? 'partial' : 'missed';
+                            return `
+                                <div class="week-day ${statusClass}">
+                                    <div class="day-name">${day.dayName}</div>
+                                    <div class="day-percentage">${day.percentage}%</div>
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
                 </div>
                 <div class="chart-card">

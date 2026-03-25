@@ -1844,18 +1844,6 @@ html {
   margin-bottom: 1.5rem;
 }
 
-.history-summary h3 {
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-  font-size: 1.25rem;
-}
-
-.summary-stats {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
 /* Weekly and Chart Cards */
 .weekly-card,
 .chart-card {
@@ -1863,7 +1851,7 @@ html {
   border-radius: 12px;
   padding: 20px;
   width: 100%;
-  min-height: 400px;
+  min-height: auto;
   border: 1px solid var(--border-color);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -1875,9 +1863,101 @@ html {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
+/* Weekly Days Grid */
+.weekly-days {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.week-day {
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 12px;
+  background-color: var(--input);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.week-day:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.week-day.completed {
+  background-color: rgba(34, 197, 94, 0.2);
+  border: 1px solid #22c55e;
+}
+
+.week-day.partial {
+  background-color: rgba(245, 158, 11, 0.2);
+  border: 1px solid #f59e0b;
+}
+
+.week-day.missed {
+  background-color: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+}
+
+.day-name {
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.day-percentage {
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Chart Card */
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .chart-card canvas {
   width: 100% !important;
-  height: 250px !important;
+  height: 300px !important;
+}
+
+/* Metric Headers */
+.metric-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+
+.metric-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.metric-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 500;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
 }
 
 /* Dashboard Grid Layout */
