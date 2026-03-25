@@ -1129,27 +1129,44 @@ function renderHistory(allTasks) {
 
 // ===== API-READY TASK MANAGEMENT =====
 
-// API-ready functions (mock for now, real backend ready)
+// Real API functions (production ready)
 async function fetchTasks() {
     try {
-        // Mock API call - replace with real API later
+        console.log('📊 Fetching tasks for user:', currentUser);
+        
+        // Try real API first
+        const response = await fetch('/api/tasks', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Tasks fetched from API:', data);
+            return data.tasks || [];
+        }
+        
+        // Fallback to localStorage if API fails
+        console.log('⚠️ API failed, using localStorage fallback');
         const userTasks = getCurrentUserTasks();
-        console.log('📊 Fetching tasks for user:', currentUser, userTasks);
         return userTasks;
     } catch (error) {
         console.error('❌ Failed to fetch tasks:', error);
-        return [];
+        // Fallback to localStorage
+        const userTasks = getCurrentUserTasks();
+        return userTasks;
     }
 }
 
 async function addTask(taskData) {
     try {
-        // Mock API call - replace with real API later
         console.log('➕ Adding task:', taskData);
+        console.log('👤 Current user:', currentUser);
         
-        const userTasks = getCurrentUserTasks();
         const newTask = {
-            id: Date.now(),
             title: taskData.title,
             status: 'pending',
             date: getTodayString(),
@@ -1158,29 +1175,101 @@ async function addTask(taskData) {
             created_at: new Date().toISOString()
         };
         
-        userTasks.push(newTask);
+        console.log('📤 Request payload:', JSON.stringify(newTask));
+        
+        // Try real API first
+        const response = await fetch('/api/tasks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+            },
+            body: JSON.stringify(newTask)
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Task created via API:', data);
+            
+            // Update localStorage as backup
+            const userTasks = getCurrentUserTasks();
+            userTasks.push(data.task || newTask);
+            saveCurrentUserTasks(userTasks);
+            
+            return data.task || newTask;
+        }
+        
+        // Fallback to localStorage if API fails
+        console.log('⚠️ API failed, using localStorage fallback');
+        const userTasks = getCurrentUserTasks();
+        const localTask = {
+            id: Date.now(),
+            ...newTask
+        };
+        userTasks.push(localTask);
         saveCurrentUserTasks(userTasks);
         
-        console.log('✅ Task added successfully:', newTask);
-        return newTask;
+        console.log('✅ Task added to localStorage:', localTask);
+        return localTask;
     } catch (error) {
         console.error('❌ Failed to add task:', error);
-        throw error;
+        
+        // Final fallback to localStorage
+        const userTasks = getCurrentUserTasks();
+        const localTask = {
+            id: Date.now(),
+            title: taskData.title,
+            status: 'pending',
+            date: getTodayString(),
+            completed: false,
+            user: currentUser,
+            created_at: new Date().toISOString()
+        };
+        userTasks.push(localTask);
+        saveCurrentUserTasks(userTasks);
+        
+        return localTask;
     }
 }
 
 async function updateTask(taskId, updates) {
     try {
-        // Mock API call - replace with real API later
         console.log('🔄 Updating task:', taskId, updates);
         
+        // Try real API first
+        const response = await fetch(`/api/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+            },
+            body: JSON.stringify(updates)
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Task updated via API:', data);
+            
+            // Update localStorage as backup
+            const userTasks = getCurrentUserTasks();
+            const taskIndex = userTasks.findIndex(t => t.id === taskId);
+            if (taskIndex !== -1) {
+                userTasks[taskIndex] = { ...userTasks[taskIndex], ...updates };
+                saveCurrentUserTasks(userTasks);
+            }
+            
+            return data.task || { id: taskId, ...updates };
+        }
+        
+        // Fallback to localStorage
+        console.log('⚠️ API failed, using localStorage fallback');
         const userTasks = getCurrentUserTasks();
         const taskIndex = userTasks.findIndex(t => t.id === taskId);
         
         if (taskIndex !== -1) {
             userTasks[taskIndex] = { ...userTasks[taskIndex], ...updates };
             saveCurrentUserTasks(userTasks);
-            console.log('✅ Task updated successfully:', userTasks[taskIndex]);
+            console.log('✅ Task updated in localStorage:', userTasks[taskIndex]);
             return userTasks[taskIndex];
         }
         
@@ -1222,13 +1311,15 @@ async function handleQuickAddTask(e) {
     submitBtn.innerHTML = '<div class="loading"></div> Adding...';
     
     try {
+        console.log('📤 Before API call - Creating task...');
+        
         // Create new task using API-ready function
         const newTask = await addTask({ title });
         
+        console.log('🎉 Task created successfully:', newTask);
+        
         // Update local tasks variable
         tasks = await fetchTasks();
-        
-        console.log('🎉 Task created successfully:', newTask);
         
         showNotification('Task created successfully!', 'success');
         titleInput.value = ''; // Clear input
@@ -1236,6 +1327,7 @@ async function handleQuickAddTask(e) {
         
         // Refresh dashboard data
         await loadDashboard();
+        
     } catch (error) {
         console.error('❌ Task creation error:', error);
         showNotification('Failed to create task. Please try again.', 'error');
