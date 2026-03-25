@@ -1,7 +1,9 @@
+console.log("APP LOADED SUCCESSFULLY");
+
 // Global variables
-let currentUser = null; // Will store username string
-let tasks = {}; // Will store tasks per user: { username1: [...], username2: [...] }
-let currentPage = 'dashboard';
+let tasks = []; // Removed comment
+let currentUser = null; // Removed comment
+let currentPage = 'dashboard'; // Removed comment
 
 // API Configuration (fallback to localStorage if backend not available)
 const API_BASE = 'https://task-tracker-vr1u.onrender.com/api';
