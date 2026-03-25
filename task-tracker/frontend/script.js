@@ -130,24 +130,26 @@ function calculateDailyProgress(date = getTodayString()) {
 // Get weekly analytics
 function getWeeklyAnalytics() {
     const userTasks = getCurrentUserTasks();
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const today = new Date();
     const weekData = [];
     
     for (let i = 6; i >= 0; i--) {
         const date = new Date(today);
-        date.setDate(date.getDate() - i);
+        date.setDate(today.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
+        const dayName = days[date.getDay() === 0 ? 6 : date.getDay() - 1];
         
-        const tasksForDate = userTasks.filter(t => t.date === dateStr);
-        const completed = tasksForDate.filter(t => t.status === 'completed').length;
-        const total = tasksForDate.length;
+        const dayTasks = userTasks.filter(task => task.date === dateStr);
+        const completedTasks = dayTasks.filter(task => task.status === 'completed').length;
+        const percentage = dayTasks.length > 0 ? Math.round((completedTasks / dayTasks.length) * 100) : 0;
         
         weekData.push({
+            dayName,
             date: dateStr,
-            dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
-            completed,
-            total,
-            percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+            tasks: dayTasks,
+            completedTasks,
+            percentage
         });
     }
     
@@ -1126,6 +1128,126 @@ function renderHistory(allTasks) {
 }
 
 // ===== TASK OPERATIONS =====
+
+// Add task function
+function addTask() {
+    const input = document.querySelector("#quickTaskTitle");
+    const value = input.value.trim();
+    
+    if (!value) {
+        showNotification('Please enter a task title', 'error');
+        return;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+
+    let data = JSON.parse(localStorage.getItem("tasks")) || {};
+
+    if (!data[today]) data[today] = [];
+
+    data[today].push({
+        title: value,
+        completed: false,
+        status: 'pending',
+        date: today,
+        id: Date.now()
+    });
+
+    localStorage.setItem("tasks", JSON.stringify(data));
+
+    input.value = "";
+
+    renderTasks();
+    updateDashboard();
+    showNotification('Task added successfully!', 'success');
+}
+
+// Render tasks function
+function renderTasks() {
+    const today = new Date().toISOString().split("T")[0];
+    const data = JSON.parse(localStorage.getItem("tasks")) || {};
+    const list = document.querySelector("#recentTasks");
+
+    list.innerHTML = "";
+
+    const todayTasks = data[today] || [];
+    
+    if (todayTasks.length === 0) {
+        list.innerHTML = '<p class="text-gray-500 text-center">Start your day by adding tasks 🚀</p>';
+        return;
+    }
+
+    todayTasks.forEach(task => {
+        const taskDiv = document.createElement("div");
+        taskDiv.className = "task-item";
+        taskDiv.innerHTML = `
+            <div class="task-content">
+                <div class="task-title">${task.title}</div>
+            </div>
+            <div class="task-actions">
+                <span class="badge ${task.status === 'completed' ? 'status-completed' : 'status-pending'}">
+                    ${task.status === 'completed' ? '✅' : '⏳'} ${task.status}
+                </span>
+                <button onclick="toggleTask('${task.id}')" class="btn btn-sm ${task.status === 'completed' ? 'btn-secondary' : 'btn-success'}">
+                    ${task.status === 'completed' ? 'Undo' : 'Complete'}
+                </button>
+            </div>
+        `;
+        list.appendChild(taskDiv);
+    });
+}
+
+// Toggle task completion
+function toggleTask(taskId) {
+    const today = new Date().toISOString().split("T")[0];
+    const data = JSON.parse(localStorage.getItem("tasks")) || {};
+    
+    if (data[today]) {
+        const task = data[today].find(t => t.id == taskId);
+        if (task) {
+            task.completed = !task.completed;
+            task.status = task.completed ? 'completed' : 'pending';
+            
+            localStorage.setItem("tasks", JSON.stringify(data));
+            renderTasks();
+            updateDashboard();
+        }
+    }
+}
+
+// Update dashboard stats
+function updateDashboard() {
+    const data = JSON.parse(localStorage.getItem("tasks")) || {};
+    const today = new Date().toISOString().split("T")[0];
+
+    const tasks = data[today] || [];
+
+    document.querySelector("#totalTasks").innerText = tasks.length;
+    document.querySelector("#completedTasks").innerText = tasks.filter(t => t.completed).length;
+    document.querySelector("#pendingTasks").innerText = tasks.filter(t => !t.completed).length;
+}
+
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Add task button event
+    const addBtn = document.querySelector("#quickAddForm button[type='submit']");
+    if (addBtn) {
+        document.querySelector("#quickAddForm").addEventListener("submit", (e) => {
+            e.preventDefault();
+            addTask();
+        });
+    }
+    
+    // Auto load on page
+    renderTasks();
+    updateDashboard();
+});
+
+// Auto load on window load
+window.onload = () => {
+    renderTasks();
+    updateDashboard();
+};
 
 // ===== API-READY TASK MANAGEMENT =====
 
