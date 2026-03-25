@@ -903,18 +903,24 @@ function renderWeeklyAnalytics() {
                         <p class="metric-value">${completedDays}/7 days</p>
                     </div>
                 </div>
-                <div class="week-summary">
-                    ${weekData.map(day => `
-                        <div class="day-item">
-                            <span class="day-name">${day.dayName}</span>
-                            <span class="day-percentage" style="color: ${day.percentage === 100 ? '#10b981' : day.percentage > 0 ? '#f59e0b' : '#6b7280'}">
-                                ${day.percentage}%
-                            </span>
+                <div class="weekly-section">
+                    <div class="weekly-left">
+                        <div class="week-summary">
+                            ${weekData.map(day => `
+                                <div class="day-item">
+                                    <span class="day-name">${day.dayName}</span>
+                                    <span class="day-percentage" style="color: ${day.percentage === 100 ? '#10b981' : day.percentage > 0 ? '#f59e0b' : '#6b7280'}">
+                                        ${day.percentage}%
+                                    </span>
+                                </div>
+                            `).join('')}
                         </div>
-                    `).join('')}
-                </div>
-                <div class="weekly-chart-container">
-                    <canvas id="weeklyChart"></canvas>
+                    </div>
+                    <div class="weekly-right">
+                        <div class="weekly-chart-container">
+                            <canvas id="weeklyChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;

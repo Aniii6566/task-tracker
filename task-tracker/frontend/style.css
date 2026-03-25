@@ -1429,6 +1429,15 @@ html {
         gap: 5px;
     }
     
+    .weekly-section {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .weekly-right canvas {
+        height: 200px !important;
+    }
+    
     .day-item {
         padding: 0.5rem;
         min-height: 60px;
@@ -1812,9 +1821,29 @@ html {
   flex-wrap: wrap;
 }
 
+/* Weekly Section Layout */
+.weekly-section {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.weekly-left {
+  flex: 1;
+}
+
+.weekly-right {
+  flex: 1;
+}
+
+.weekly-right canvas {
+  width: 100% !important;
+  height: 250px !important;
+}
+
 /* Weekly Chart Container */
 .weekly-chart-container {
-  margin-top: 1.5rem;
   padding: 1rem;
   background-color: var(--input);
   border-radius: 8px;
