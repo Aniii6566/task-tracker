@@ -1374,45 +1374,91 @@ html {
         left: 0;
         height: 100vh;
         z-index: 50;
-        transform: translateX(-240px);
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
     }
-
+    
     .sidebar.active {
         transform: translateX(0);
     }
-}
-
-@media (min-width: 769px) {
-    .sidebar {
-        position: relative;
-        transform: none !important;
+    
+    .mobile-menu-btn {
+        display: block;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1001;
+        background: var(--card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 10px;
+        cursor: pointer;
+    }
+    
+    .sidebar-overlay {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
+    }
+    
+    .sidebar-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 10px;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .week-summary {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+    }
+    
+    .day-item {
+        padding: 0.5rem;
+        min-height: 60px;
+        font-size: 0.75rem;
+    }
+    
+    .day-name {
+        font-size: 0.7rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .day-percentage {
+        font-size: 0.75rem;
     }
 }
 
-/* ===== SIDEBAR OVERLAY ===== */
-.sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 45;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: auto;
-}
-
-.sidebar-overlay.show {
-    display: block;
-    opacity: 1;
-}
-
-@media (min-width: 769px) {
-    .sidebar-overlay {
-        display: none !important;
+@media (max-width: 480px) {
+    .week-summary {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+    }
+    
+    .week-summary .day-item:nth-child(7),
+    .week-summary .day-item:nth-child(6) {
+        grid-column: span 2;
+    }
+    
+    .day-item {
+        padding: 0.75rem;
+        min-height: 50px;
     }
 }
 
@@ -1591,10 +1637,15 @@ html {
   width: 100%;
 }
 
+.weekly-card {
+  width: 100%;
+  max-width: 100%;
+}
+
 .week-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
   margin-top: 1rem;
   width: 100%;
 }
@@ -1604,23 +1655,27 @@ html {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 0.75rem;
+  padding: 1rem;
   background-color: var(--input);
   border-radius: 8px;
   font-size: 0.875rem;
   text-align: center;
-  min-height: 60px;
+  min-height: 70px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .day-name {
   color: var(--text-secondary);
   font-weight: 500;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
 }
 
 .day-percentage {
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1;
 }
 
 /* ===== DASHBOARD LAYOUT FIX ===== */
@@ -1755,6 +1810,22 @@ html {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+/* Weekly Chart Container */
+.weekly-chart-container {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: var(--input);
+  border-radius: 8px;
+  height: 250px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#weeklyChart {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* Empty State */

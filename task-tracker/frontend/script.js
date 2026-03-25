@@ -913,9 +913,100 @@ function renderWeeklyAnalytics() {
                         </div>
                     `).join('')}
                 </div>
+                <div class="weekly-chart-container">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
             </div>
         `;
+        
+        // Render the chart after DOM is updated
+        setTimeout(() => renderWeeklyChart(weekData), 100);
     }
+}
+
+// Render weekly chart
+function renderWeeklyChart(weekData) {
+    const canvas = document.getElementById('weeklyChart');
+    if (!canvas) return;
+    
+    // Prepare data for chart
+    const labels = weekData.map(day => day.dayName);
+    const data = weekData.map(day => day.percentage === 100 ? 1 : day.percentage > 0 ? 0.5 : 0);
+    const backgroundColors = weekData.map(day => {
+        if (day.percentage === 100) return '#22c55e';  // Green for completed
+        if (day.percentage > 0) return '#f59e0b';     // Orange for partial
+        return '#ef4444';                           // Red for missed
+    });
+    
+    // Destroy existing chart if it exists
+    if (window.weeklyChartInstance) {
+        window.weeklyChartInstance.destroy();
+    }
+    
+    // Create new chart
+    const ctx = canvas.getContext('2d');
+    window.weeklyChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Weekly Progress',
+                data: data,
+                backgroundColor: backgroundColors,
+                borderColor: backgroundColors,
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed.y;
+                            const dayData = weekData[context.dataIndex];
+                            if (value === 1) {
+                                return `✅ Completed (${dayData.percentage}%)`;
+                            } else if (value === 0.5) {
+                                return `🔄 Partial (${dayData.percentage}%)`;
+                            } else {
+                                return `❌ Missed (${dayData.percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1.2,
+                    ticks: {
+                        stepSize: 0.5,
+                        callback: function(value) {
+                            if (value === 1) return '✅';
+                            if (value === 0.5) return '🔄';
+                            if (value === 0) return '❌';
+                            return '';
+                        }
+                    },
+                    grid: {
+                        display: true,
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
 }
 
 // Render recent tasks
