@@ -893,7 +893,7 @@ function renderWeeklyAnalytics() {
         const completedDays = weekData.filter(d => d.percentage === 100).length;
         
         analyticsContainer.innerHTML = `
-            <div class="weekly-wrapper">
+            <div class="dashboard-grid">
                 <div class="weekly-card">
                     <div class="metric-header">
                         <div class="metric-icon bg-accent">
