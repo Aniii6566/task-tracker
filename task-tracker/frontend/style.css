@@ -1429,12 +1429,12 @@ html {
         gap: 5px;
     }
     
-    .weekly-section {
+    .weekly-wrapper {
         flex-direction: column;
         gap: 1rem;
     }
     
-    .weekly-right canvas {
+    .chart-card canvas {
         height: 200px !important;
     }
     
@@ -1819,6 +1819,34 @@ html {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+/* Weekly Wrapper Layout */
+.weekly-wrapper {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+
+.weekly-card,
+.chart-card {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 20px;
+  flex: 1;
+}
+
+.weekly-card {
+  border: 1px solid var(--border-color);
+}
+
+.chart-card {
+  border: 1px solid var(--border-color);
+}
+
+.chart-card canvas {
+  width: 100% !important;
+  height: 250px !important;
 }
 
 /* Weekly Section Layout */

@@ -893,39 +893,46 @@ function renderWeeklyAnalytics() {
         const completedDays = weekData.filter(d => d.percentage === 100).length;
         
         analyticsContainer.innerHTML = `
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon bg-accent">
-                        <i class="fas fa-calendar-week"></i>
+            <div class="weekly-wrapper">
+                <div class="weekly-card">
+                    <div class="metric-header">
+                        <div class="metric-icon bg-accent">
+                            <i class="fas fa-calendar-week"></i>
+                        </div>
+                        <div>
+                            <p class="metric-label">Weekly Performance</p>
+                            <p class="metric-value">${completedDays}/7 days</p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="metric-label">Weekly Performance</p>
-                        <p class="metric-value">${completedDays}/7 days</p>
+                    <div class="week-summary">
+                        ${weekData.map(day => `
+                            <div class="day-item">
+                                <span class="day-name">${day.dayName}</span>
+                                <span class="day-percentage" style="color: ${day.percentage === 100 ? '#10b981' : day.percentage > 0 ? '#f59e0b' : '#6b7280'}">
+                                    ${day.percentage}%
+                                </span>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
-                <div class="weekly-section">
-                    <div class="weekly-left">
-                        <div class="week-summary">
-                            ${weekData.map(day => `
-                                <div class="day-item">
-                                    <span class="day-name">${day.dayName}</span>
-                                    <span class="day-percentage" style="color: ${day.percentage === 100 ? '#10b981' : day.percentage > 0 ? '#f59e0b' : '#6b7280'}">
-                                        ${day.percentage}%
-                                    </span>
-                                </div>
-                            `).join('')}
+                <div class="chart-card">
+                    <div class="metric-header">
+                        <div class="metric-icon bg-warning">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div>
+                            <p class="metric-label">Progress Chart</p>
+                            <p class="metric-value">Last 7 Days</p>
                         </div>
                     </div>
-                    <div class="weekly-right">
-                        <div class="weekly-chart-container">
-                            <canvas id="weeklyChart"></canvas>
-                        </div>
+                    <div class="weekly-chart-container">
+                        <canvas id="weeklyChart"></canvas>
                     </div>
                 </div>
             </div>
         `;
         
-        // Render the chart after DOM is updated
+        // Render chart after DOM is updated
         setTimeout(() => renderWeeklyChart(weekData), 100);
     }
 }
