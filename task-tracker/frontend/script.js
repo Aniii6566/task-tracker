@@ -1,103 +1,21 @@
-console.log("APP LOADED");
+// Global variables
+let currentUser = null; // Will store username string
+let tasks = {}; // Will store tasks per user: { username1: [...], username2: [...] }
+let currentPage = 'dashboard';
 
-// ===== LOGIN SYSTEM =====
+// API Configuration (fallback to localStorage if backend not available)
+const API_BASE = 'https://task-tracker-vr1u.onrender.com/api';
 
-// Initialize users if not exists
-if (!localStorage.getItem("users")) {
-    const defaultUsers = {
-        "admin": "admin123",
-        "demo": "demo123"
-    };
-    localStorage.setItem("users", JSON.stringify(defaultUsers));
-}
-
-// Login function
-function loginUser() {
-    const usernameInput = document.querySelector("#username");
-    const passwordInput = document.querySelector("#password");
+// ===== CRITICAL: FIX EVENT RE-BINDING ISSUE =====
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('App initializing...');
+    initializeAuthSystem();
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
     
-    if (!usernameInput || !passwordInput) {
-        alert("Login form not found");
-        return;
-    }
-    
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    if (!username || !password) {
-        alert("Please fill all fields");
-        return;
-    }
-
-    let users = JSON.parse(localStorage.getItem("users")) || {};
-
-    if (!users[username]) {
-        alert("User not found");
-        return;
-    }
-
-    if (users[username] !== password) {
-        alert("Wrong password");
-        return;
-    }
-
-    localStorage.setItem("currentUser", username);
-    showApp();
-    renderTasks();
-    updateDashboard();
-    console.log("✅ Login successful:", username);
-}
-
-// Create account function
-function createAccount() {
-    const usernameInput = document.querySelector("#username");
-    const passwordInput = document.querySelector("#password");
-    
-    if (!usernameInput || !passwordInput) {
-        alert("Create account form not found");
-        return;
-    }
-    
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    if (!username || !password) {
-        alert("Please fill all fields");
-        return;
-    }
-
-    let users = JSON.parse(localStorage.getItem("users")) || {};
-
-    if (users[username]) {
-        alert("User already exists");
-        return;
-    }
-
-    users[username] = password;
-    localStorage.setItem("users", JSON.stringify(users));
-    alert("Account created successfully");
-    console.log("✅ Account created:", username);
-}
-
-// ===== AUTH SWITCHING =====
-
-function showApp() {
-    const authContainer = document.getElementById("authContainer");
-    const appContainer = document.getElementById("appContainer");
-    
-    if (authContainer) authContainer.style.display = "none";
-    if (appContainer) appContainer.style.display = "block";
-    console.log("✅ Showing App - Auth hidden, App visible");
-}
-
-function showAuth() {
-    const authContainer = document.getElementById("authContainer");
-    const appContainer = document.getElementById("appContainer");
-    
-    if (authContainer) authContainer.style.display = "flex";
-    if (appContainer) appContainer.style.display = "none";
-    console.log("✅ Showing Auth - App hidden, Auth visible");
-}
+    // Initialize all event listeners - CRITICAL: Do NOT re-render HTML that removes listeners
+    initializeEventListeners();
+});
 
 // Load history for specific date
 function loadHistoryForDate() {
@@ -105,7 +23,7 @@ function loadHistoryForDate() {
     const selectedDate = dateInput.value;
     
     if (!selectedDate) {
-        alert('Please select a date');
+        showNotification('Please select a date', 'error');
         return;
     }
     
@@ -115,7 +33,13 @@ function loadHistoryForDate() {
     const container = document.getElementById('historyList');
     
     if (tasksForDate.length === 0) {
-        container.innerHTML = '<li style="color: #94a3b8; text-align: center; padding: 2rem;">No tasks found for this date</li>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📅</div>
+                <div class="empty-state-text">No tasks found for ${selectedDate}</div>
+                <div class="empty-state-subtext">Try selecting a different date</div>
+            </div>
+        `;
         return;
     }
     
@@ -124,23 +48,30 @@ function loadHistoryForDate() {
     const pending = tasksForDate.filter(t => t.status === 'pending');
     
     container.innerHTML = `
-        <div style="margin-bottom: 1rem;">
-            <h4>Tasks for ${selectedDate}</h4>
-            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                <span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px;">✔ ${completed.length} Completed</span>
-                <span style="background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px;">✖ ${missed.length} Missed</span>
-                <span style="background: #6b7280; color: white; padding: 4px 8px; border-radius: 4px;">⏳ ${pending.length} Pending</span>
+        <div class="history-summary">
+            <h3>Tasks for ${selectedDate}</h3>
+            <div class="summary-stats">
+                <span class="badge status-completed">✔ ${completed.length} Completed</span>
+                <span class="badge status-missed">✖ ${missed.length} Missed</span>
+                <span class="badge status-pending">⏳ ${pending.length} Pending</span>
             </div>
         </div>
-        <div>
-            ${tasksForDate.map(task => `
-                <li style="background: #334155; padding: 1rem; margin-bottom: 0.5rem; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="${task.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${task.title}</span>
-                    <span style="background: ${task.status === 'completed' ? '#10b981' : task.status === 'missed' ? '#ef4444' : '#6b7280'}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">
-                        ${task.status}
-                    </span>
-                </li>
-            `).join('')}
+        <div class="tasks-list">
+            ${tasksForDate.map(task => {
+                const statusInfo = getTaskStatusInfo(task.status);
+                return `
+                    <div class="task-item">
+                        <div class="task-content">
+                            <div class="task-title">${task.title}</div>
+                        </div>
+                        <div class="task-actions">
+                            <span class="badge ${statusInfo.class}" style="color: ${statusInfo.color}">
+                                ${statusInfo.icon} ${task.status}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
         </div>
     `;
 }
@@ -199,26 +130,24 @@ function calculateDailyProgress(date = getTodayString()) {
 // Get weekly analytics
 function getWeeklyAnalytics() {
     const userTasks = getCurrentUserTasks();
-    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const today = new Date();
     const weekData = [];
     
     for (let i = 6; i >= 0; i--) {
         const date = new Date(today);
-        date.setDate(today.getDate() - i);
+        date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
-        const dayName = days[date.getDay() === 0 ? 6 : date.getDay() - 1];
         
-        const dayTasks = userTasks.filter(task => task.date === dateStr);
-        const completedTasks = dayTasks.filter(task => task.status === 'completed').length;
-        const percentage = dayTasks.length > 0 ? Math.round((completedTasks / dayTasks.length) * 100) : 0;
+        const tasksForDate = userTasks.filter(t => t.date === dateStr);
+        const completed = tasksForDate.filter(t => t.status === 'completed').length;
+        const total = tasksForDate.length;
         
         weekData.push({
-            dayName,
             date: dateStr,
-            tasks: dayTasks,
-            completedTasks,
-            percentage
+            dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
+            completed,
+            total,
+            percentage: total > 0 ? Math.round((completed / total) * 100) : 0
         });
     }
     
@@ -266,13 +195,13 @@ function updateMissedTasks() {
 function showApp() {
     document.getElementById("authContainer").style.display = "none";
     document.getElementById("appContainer").style.display = "flex";
-    console.log("✅ Showing App - Auth hidden, App visible");
+    console.log("🏠 Showing App - Auth hidden, App visible");
 }
 
 function showAuth() {
     document.getElementById("authContainer").style.display = "flex";
     document.getElementById("appContainer").style.display = "none";
-    console.log("✅ Showing Auth - App hidden, Auth visible");
+    console.log("🔐 Showing Auth - App hidden, Auth visible");
 }
 
 // ===== AUTHENTICATION SYSTEM =====
@@ -650,7 +579,7 @@ function handleForgotPassword() {
                 }, 1500);
             }
         } catch (error) {
-            console.error('Password reset error:', error);
+            console.error('Forgot password error:', error);
             showAuthError('forgotError', 'An error occurred during password reset');
             showNotification('Password reset error. Please try again.', 'error');
         } finally {
@@ -662,215 +591,1264 @@ function handleForgotPassword() {
     }, 1000);
 }
 
-// ===== TASK MANAGEMENT =====
-
-function addTask() {
-    const input = document.getElementById("taskInput");
-    const button = document.getElementById("addTaskBtn");
+// Show auth error
+function showAuthError(errorId, message, clear = false) {
+    const errorElement = document.getElementById(errorId);
+    const errorText = document.getElementById(errorId + 'Text');
     
-    if (!input || !button) {
-        console.log("Task input or button not found");
-        return;
-    }
+    console.log('Showing auth error:', { errorId, message, clear });
     
-    const value = input.value.trim();
-    if (!value) return;
-
-    const user = localStorage.getItem("currentUser");
-    if (!user) {
-        alert("Please login to add tasks");
-        return;
+    if (errorElement && errorText) {
+        if (clear) {
+            errorElement.classList.add('hidden');
+        } else {
+            errorText.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
     }
-
-    const today = new Date().toISOString().split("T")[0];
-
-    let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
-
-    if (!tasks[user]) tasks[user] = {};
-    if (!tasks[user][today]) tasks[user][today] = [];
-
-    tasks[user][today].push({
-        title: value,
-        completed: false
-    });
-
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-
-    input.value = "";
-    renderTasks();
-    updateDashboard();
-    console.log("✅ Task added:", value);
 }
 
-function renderTasks() {
-    const user = localStorage.getItem("currentUser");
-    if (!user) return;
+// ===== MAIN APP FUNCTIONS =====
 
-    const today = new Date().toISOString().split("T")[0];
-    let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
-    let list = document.getElementById("taskList");
+// Screen size check and adjustment
+function checkScreenSize() {
+    const isMobile = window.innerWidth <= 768;
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    
+    if (isMobile) {
+        // Mobile: Hide sidebar by default
+        sidebar.classList.remove('active');
+        mainContent.style.marginLeft = '0';
+        document.body.style.overflow = '';
+    } else {
+        // Desktop: Ensure sidebar is visible
+        sidebar.classList.remove('active');
+        mainContent.style.marginLeft = '0';
+    }
+}
 
-    if (!list) return;
+// Sidebar toggle functions
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    const mainContent = document.getElementById('mainContent');
+    
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('show');
+    
+    // Adjust main content margin and body scroll
+    if (sidebar.classList.contains('active')) {
+        mainContent.style.marginLeft = '0';
+        document.body.style.overflow = 'hidden';
+    } else {
+        mainContent.style.marginLeft = '0';
+        document.body.style.overflow = '';
+    }
+}
 
-    list.innerHTML = "";
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    const mainContent = document.getElementById('mainContent');
+    
+    sidebar.classList.remove('active');
+    overlay.classList.remove('show');
+    mainContent.style.marginLeft = '0';
+    document.body.style.overflow = '';
+}
 
-    const todayTasks = tasks[user]?.[today] || [];
+// Show dashboard
+function showDashboard() {
+    console.log('🏠 Showing dashboard');
+    showApp(); // CRITICAL: Show app container
+    showSection('dashboardSection');
+    currentPage = 'dashboard';
+    closeSidebar();
+    updateSidebarUsername();
+    loadDashboard();
+}
+
+// Logout function
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        console.log('🚪 User requested logout...');
+        localStorage.removeItem('currentUser'); // Remove currentUser ONLY
+        currentUser = null; // Keep all users + tasks
+        
+        showNotification('Logged out successfully!', 'info');
+        
+        // Show login screen
+        console.log('🔄 Logging out, showing auth screen...');
+        showAuth(); // CRITICAL: Show auth container
+        showLogin();
+    }
+}
+
+// Update sidebar username
+function updateSidebarUsername() {
+    const sidebarUsername = document.getElementById('sidebarUsername');
+    if (sidebarUsername && currentUser) {
+        sidebarUsername.textContent = 'Welcome, ' + currentUser + '!'; // currentUser is now just a string
+    }
+}
+
+// ===== NAVIGATION FUNCTIONS =====
+
+// Dashboard navigation
+function navigateToDashboard() {
+    console.log('Dashboard navigation clicked');
+    showDashboard();
+}
+
+// Tasks navigation
+function navigateToTasks() {
+    console.log('Tasks navigation clicked');
+    showSection('tasksSection');
+    loadTasks();
+}
+
+// Completed navigation
+function navigateToCompleted() {
+    console.log('Completed navigation clicked');
+    showSection('completedSection');
+    loadCompletedTasks();
+}
+
+// History navigation
+function navigateToHistory() {
+    console.log('History navigation clicked');
+    showSection('historySection');
+    loadHistory();
+}
+
+// Analytics navigation
+function navigateToAnalytics() {
+    console.log('Analytics navigation clicked');
+    showSection('analyticsSection');
+    loadAnalytics();
+}
+
+// Settings navigation
+function navigateToSettings() {
+    console.log('Settings navigation clicked');
+    showSection('settingsSection');
+    loadSettings();
+}
+
+// ===== LOAD FUNCTIONS =====
+
+// Load dashboard data
+async function loadDashboard() {
+    try {
+        console.log('🔄 Loading dashboard data for user:', currentUser);
+        
+        // Validate user
+        if (!currentUser) {
+            console.error('❌ No current user found');
+            showAuth();
+            return;
+        }
+        
+        // Update missed tasks first
+        updateMissedTasks();
+        
+        // Load tasks using API-ready function
+        tasks = await fetchTasks();
+        
+        console.log('📊 Dashboard tasks loaded:', tasks);
+        
+        // Update all dashboard components
+        updateStats();
+        renderRecentTasks();
+        renderProgressCard();
+        renderWeeklyAnalytics();
+    } catch (error) {
+        console.error('❌ Dashboard load error:', error);
+        showNotification('Failed to load dashboard', 'error');
+    }
+}
+
+// Load all tasks
+async function loadTasks() {
+    try {
+        console.log('Loading tasks for user:', currentUser);
+        
+        // Load ONLY currentUser tasks
+        tasks = getCurrentUserTasks();
+        renderTasks();
+    } catch (error) {
+        console.error('Tasks load error:', error);
+        showNotification('Failed to load tasks', 'error');
+    }
+}
+
+// Load completed tasks
+async function loadCompletedTasks() {
+    try {
+        console.log('Loading completed tasks for user:', currentUser);
+        
+        // Load ONLY currentUser tasks
+        const allTasks = getCurrentUserTasks();
+        const completedTasks = allTasks.filter(task => task.status === 'Completed');
+        renderCompletedTasks(completedTasks);
+    } catch (error) {
+        console.error('Completed tasks load error:', error);
+        showNotification('Failed to load completed tasks', 'error');
+    }
+}
+
+// Load task history
+async function loadHistory() {
+    try {
+        console.log('Loading task history for user:', currentUser);
+        
+        // Load ONLY currentUser tasks
+        const allTasks = getCurrentUserTasks();
+        renderHistory(allTasks);
+    } catch (error) {
+        console.error('History load error:', error);
+        showNotification('Failed to load history', 'error');
+    }
+}
+
+// Load analytics
+async function loadAnalytics() {
+    try {
+        console.log('Loading analytics for user:', currentUser);
+        
+        // Load ONLY currentUser tasks
+        const allTasks = getCurrentUserTasks();
+        
+        // Create charts
+        createStatusChart(allTasks);
+        createWeeklyChart(allTasks);
+    } catch (error) {
+        console.error('Analytics load error:', error);
+        showNotification('Failed to load analytics', 'error');
+    }
+}
+
+// Load settings
+function loadSettings() {
+    console.log('Loading settings for user:', currentUser);
+    if (currentUser) {
+        document.getElementById('currentUsername').value = currentUser || '';
+        document.getElementById('newUsername').value = '';
+        document.getElementById('oldPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+    }
+}
+
+// ===== RENDER FUNCTIONS =====
+
+// Update dashboard stats
+function updateStats() {
+    const today = getTodayString();
+    const todayTasks = tasks.filter(t => t.date === today);
+    
+    const totalTasks = todayTasks.length;
+    const completedTasks = todayTasks.filter(task => task.status === 'completed').length;
+    const pendingTasks = todayTasks.filter(task => task.status === 'pending').length;
+    
+    document.getElementById('totalTasks').textContent = totalTasks;
+    document.getElementById('completedTasks').textContent = completedTasks;
+    document.getElementById('pendingTasks').textContent = pendingTasks;
+    
+    console.log('Stats updated:', { totalTasks, completedTasks, pendingTasks });
+}
+
+// Render progress card
+function renderProgressCard() {
+    const progress = calculateDailyProgress();
+    const progressContainer = document.getElementById('progressCard');
+    
+    if (progressContainer) {
+        progressContainer.innerHTML = `
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-icon bg-warning">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <p class="metric-label">Today's Progress</p>
+                        <p class="metric-value">${progress}%</p>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${progress}%"></div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Render weekly analytics
+function renderWeeklyAnalytics() {
+    const weekData = getWeeklyAnalytics();
+    const analyticsContainer = document.getElementById('weeklyAnalytics');
+    
+    if (analyticsContainer) {
+        const completedDays = weekData.filter(d => d.percentage === 100).length;
+        
+        analyticsContainer.innerHTML = `
+            <div class="main-section">
+                <div class="weekly-card">
+                    <div class="metric-header">
+                        <div class="metric-icon bg-accent">
+                            <i class="fas fa-calendar-week"></i>
+                        </div>
+                        <div>
+                            <p class="metric-label">Weekly Performance</p>
+                            <p class="metric-value">${completedDays}/7 days</p>
+                        </div>
+                    </div>
+                    <div class="weekly-days">
+                        ${weekData.map(day => {
+                            const statusClass = day.percentage === 100 ? 'completed' : day.percentage > 0 ? 'partial' : 'missed';
+                            return `
+                                <div class="week-day ${statusClass}">
+                                    <div class="day-name">${day.dayName}</div>
+                                    <div class="day-percentage">${day.percentage}%</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="metric-header">
+                        <div class="metric-icon bg-warning">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div>
+                            <p class="metric-label">Progress Chart</p>
+                            <p class="metric-value">Last 7 Days</p>
+                        </div>
+                    </div>
+                    <div class="weekly-chart-container">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Render chart after DOM is updated
+        setTimeout(() => renderWeeklyChart(weekData), 100);
+    }
+}
+
+// Render weekly chart
+function renderWeeklyChart(weekData) {
+    const canvas = document.getElementById('weeklyChart');
+    if (!canvas) return;
+    
+    // Prepare data for chart
+    const labels = weekData.map(day => day.dayName);
+    const data = weekData.map(day => day.percentage === 100 ? 1 : day.percentage > 0 ? 0.5 : 0);
+    const backgroundColors = weekData.map(day => {
+        if (day.percentage === 100) return '#22c55e';  // Green for completed
+        if (day.percentage > 0) return '#f59e0b';     // Orange for partial
+        return '#ef4444';                           // Red for missed
+    });
+    
+    // Destroy existing chart if it exists
+    if (window.weeklyChartInstance) {
+        window.weeklyChartInstance.destroy();
+    }
+    
+    // Create new chart
+    const ctx = canvas.getContext('2d');
+    window.weeklyChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Weekly Progress',
+                data: data,
+                backgroundColor: backgroundColors,
+                borderColor: backgroundColors,
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed.y;
+                            const dayData = weekData[context.dataIndex];
+                            if (value === 1) {
+                                return `✅ Completed (${dayData.percentage}%)`;
+                            } else if (value === 0.5) {
+                                return `🔄 Partial (${dayData.percentage}%)`;
+                            } else {
+                                return `❌ Missed (${dayData.percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1.2,
+                    ticks: {
+                        stepSize: 0.5,
+                        callback: function(value) {
+                            if (value === 1) return '✅';
+                            if (value === 0.5) return '🔄';
+                            if (value === 0) return '❌';
+                            return '';
+                        }
+                    },
+                    grid: {
+                        display: true,
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Render recent tasks
+function renderRecentTasks() {
+    const container = document.getElementById('recentTasks');
+    const today = getTodayString();
+    const todayTasks = tasks.filter(t => t.date === today).slice(0, 5);
     
     if (todayTasks.length === 0) {
-        list.innerHTML = '<li style="color: #94a3b8; text-align: center; padding: 2rem;">No tasks yet. Add your first task above!</li>';
+        container.innerHTML = '<p class="text-gray-500 text-center">Start your day by adding tasks 🚀</p>';
         return;
     }
-
-    todayTasks.forEach((task, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-            <span style="${task.completed ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${task.title}</span>
-            <button onclick="toggleTask(${index})" style="margin-left: 10px; padding: 4px 8px; background: ${task.completed ? '#6b7280' : '#4ade80'}; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                ${task.completed ? 'Undo' : 'Complete'}
-            </button>
+    
+    container.innerHTML = todayTasks.map(task => {
+        const statusInfo = getTaskStatusInfo(task.status);
+        const streak = calculateTaskStreak(task.title);
+        const streakDisplay = streak > 0 ? `🔥 ${streak} days` : '';
+        
+        return `
+            <div class="task-item">
+                <div class="task-content">
+                    <div class="task-title">${task.title}</div>
+                    ${streakDisplay ? `<div class="task-streak">${streakDisplay}</div>` : ''}
+                </div>
+                <div class="task-actions">
+                    <span class="badge ${statusInfo.class}" style="color: ${statusInfo.color}">
+                        ${statusInfo.icon} ${task.status}
+                    </span>
+                </div>
+            </div>
         `;
-        list.appendChild(li);
-    });
+    }).join('');
 }
 
-function toggleTask(index) {
-    const user = localStorage.getItem("currentUser");
-    if (!user) return;
-
-    const today = new Date().toISOString().split("T")[0];
-    let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
+// Render all tasks
+function renderTasks() {
+    const container = document.getElementById('tasksList');
     
-    if (tasks[user]?.[today]) {
-        tasks[user][today][index].completed = !tasks[user][today][index].completed;
-        localStorage.setItem("tasks", JSON.stringify(tasks));
-        renderTasks();
-        updateDashboard();
+    if (tasks.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center">No tasks found.</p>';
+        return;
+    }
+    
+    container.innerHTML = tasks.map(task => `
+        <div class="task-item">
+            <div class="task-title">${task.title}</div>
+            <div class="task-actions">
+                <span class="badge status-${task.status.toLowerCase().replace(' ', '-')}">${task.status}</span>
+                <button onclick="updateTaskStatus(${task.id}, 'Completed')" class="btn btn-success btn-sm">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button onclick="deleteTask(${task.id})" class="btn btn-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Render completed tasks
+function renderCompletedTasks(completedTasks) {
+    const container = document.getElementById('completedList');
+    
+    if (completedTasks.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center">No completed tasks found.</p>';
+        return;
+    }
+    
+    container.innerHTML = completedTasks.map(task => `
+        <div class="task-item">
+            <div class="task-title">${task.title}</div>
+            <div class="task-actions">
+                <span class="badge status-completed">Completed</span>
+                <button onclick="deleteTask(${task.id})" class="btn btn-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Render history
+function renderHistory(allTasks) {
+    const container = document.getElementById('historyList');
+    
+    if (allTasks.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center">No task history found.</p>';
+        return;
+    }
+    
+    // Sort by creation date (newest first)
+    const sortedTasks = allTasks.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    container.innerHTML = sortedTasks.map(task => `
+        <div class="task-item">
+            <div class="task-title">${task.title}</div>
+            <div class="task-actions">
+                <span class="badge status-${task.status.toLowerCase().replace(' ', '-')}">${task.status}</span>
+                <small class="text-gray-400">${new Date(task.created_at).toLocaleDateString()}</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ===== TASK OPERATIONS =====
+
+// ===== API-READY TASK MANAGEMENT =====
+
+// API-ready functions (mock for now, real backend ready)
+async function fetchTasks() {
+    try {
+        // Mock API call - replace with real API later
+        const userTasks = getCurrentUserTasks();
+        console.log('📊 Fetching tasks for user:', currentUser, userTasks);
+        return userTasks;
+    } catch (error) {
+        console.error('❌ Failed to fetch tasks:', error);
+        return [];
     }
 }
 
-function updateDashboard() {
-    const user = localStorage.getItem("currentUser");
-    if (!user) return;
-
-    const today = new Date().toISOString().split("T")[0];
-    let tasks = JSON.parse(localStorage.getItem("tasks")) || {};
-    let todayTasks = tasks[user]?.[today] || [];
-
-    const total = todayTasks.length;
-    const completed = todayTasks.filter(t => t.completed).length;
-    const pending = total - completed;
-
-    const totalEl = document.getElementById("totalTasks");
-    const completedEl = document.getElementById("completedTasks");
-    const pendingEl = document.getElementById("pendingTasks");
-
-    if (totalEl) totalEl.innerText = total;
-    if (completedEl) completedEl.innerText = completed;
-    if (pendingEl) pendingEl.innerText = pending;
+async function addTask(taskData) {
+    try {
+        // Mock API call - replace with real API later
+        console.log('➕ Adding task:', taskData);
+        
+        const userTasks = getCurrentUserTasks();
+        const newTask = {
+            id: Date.now(),
+            title: taskData.title,
+            status: 'pending',
+            date: getTodayString(),
+            completed: false,
+            user: currentUser,
+            created_at: new Date().toISOString()
+        };
+        
+        userTasks.push(newTask);
+        saveCurrentUserTasks(userTasks);
+        
+        console.log('✅ Task added successfully:', newTask);
+        return newTask;
+    } catch (error) {
+        console.error('❌ Failed to add task:', error);
+        throw error;
+    }
 }
 
-function getCurrentUserTasks() {
-    const user = localStorage.getItem("currentUser");
-    if (!user) return [];
+async function updateTask(taskId, updates) {
+    try {
+        // Mock API call - replace with real API later
+        console.log('🔄 Updating task:', taskId, updates);
+        
+        const userTasks = getCurrentUserTasks();
+        const taskIndex = userTasks.findIndex(t => t.id === taskId);
+        
+        if (taskIndex !== -1) {
+            userTasks[taskIndex] = { ...userTasks[taskIndex], ...updates };
+            saveCurrentUserTasks(userTasks);
+            console.log('✅ Task updated successfully:', userTasks[taskIndex]);
+            return userTasks[taskIndex];
+        }
+        
+        throw new Error('Task not found');
+    } catch (error) {
+        console.error('❌ Failed to update task:', error);
+        throw error;
+    }
+}
+
+// Handle quick add task
+async function handleQuickAddTask(e) {
+    e.preventDefault();
+    console.log('🚀 Quick add task submitted for user:', currentUser);
     
-    const allTasks = JSON.parse(localStorage.getItem("tasks")) || {};
-    return allTasks[user] || [];
+    const titleInput = document.getElementById('quickTaskTitle');
+    const title = titleInput.value.trim();
+    
+    console.log('📝 Task title:', title);
+    console.log('👤 Current user:', currentUser);
+    
+    // Validate input
+    if (!title) {
+        showNotification('Please enter a task title', 'error');
+        titleInput.focus();
+        return;
+    }
+    
+    // Validate user
+    if (!currentUser) {
+        showNotification('Please login to add tasks', 'error');
+        return;
+    }
+    
+    // Disable form during submission
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="loading"></div> Adding...';
+    
+    try {
+        // Create new task using API-ready function
+        const newTask = await addTask({ title });
+        
+        // Update local tasks variable
+        tasks = await fetchTasks();
+        
+        console.log('🎉 Task created successfully:', newTask);
+        
+        showNotification('Task created successfully!', 'success');
+        titleInput.value = ''; // Clear input
+        titleInput.focus(); // Focus back to input
+        
+        // Refresh dashboard data
+        await loadDashboard();
+    } catch (error) {
+        console.error('❌ Task creation error:', error);
+        showNotification('Failed to create task. Please try again.', 'error');
+    } finally {
+        // Re-enable form
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
 }
 
-// ===== NAVIGATION =====
+// Update task status
+async function updateTaskStatus(taskId, status) {
+    try {
+        console.log('🔄 Updating task', taskId, 'to', status, 'for user:', currentUser);
+        
+        // Validate user
+        if (!currentUser) {
+            showNotification('Please login to update tasks', 'error');
+            return;
+        }
+        
+        // Use API-ready function
+        const updatedTask = await updateTask(taskId, { status });
+        
+        // Update local tasks variable
+        tasks = await fetchTasks();
+        
+        showNotification('Task updated successfully!', 'success');
+        
+        // Refresh current view
+        if (currentPage === 'dashboard') {
+            await loadDashboard();
+        } else if (currentPage === 'tasks') {
+            await loadTasks();
+        }
+    } catch (error) {
+        console.error('❌ Task update error:', error);
+        showNotification('Failed to update task', 'error');
+    }
+}
 
-function setupNavigation() {
-    const navItems = document.querySelectorAll(".nav-item");
-    const sections = document.querySelectorAll(".content-section");
-
-    navItems.forEach(item => {
-        item.addEventListener("click", (e) => {
-            e.preventDefault();
-            const targetSection = item.getAttribute("data-section");
+// Delete task
+async function deleteTask(taskId) {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+    
+    try {
+        console.log('Deleting task', taskId, 'for user:', currentUser);
+        
+        // Get current user's tasks
+        const userTasks = getCurrentUserTasks();
+        
+        // Find task in array
+        const taskIndex = userTasks.findIndex(t => t.id === taskId);
+        if (taskIndex !== -1) {
+            userTasks.splice(taskIndex, 1);
             
-            // Update active nav
-            navItems.forEach(nav => nav.classList.remove("active"));
-            item.classList.add("active");
+            // Save to currentUser's task array
+            saveCurrentUserTasks(userTasks);
             
-            // Show target section
-            sections.forEach(section => section.style.display = "none");
+            // Update local tasks variable
+            tasks = userTasks;
             
-            const targetEl = document.getElementById(targetSection);
-            if (targetEl) {
-                targetEl.style.display = "block";
+            showNotification('Task deleted successfully!', 'success');
+            
+            // Refresh current view
+            if (currentPage === 'dashboard') {
+                loadDashboard();
+            } else if (currentPage === 'tasks') {
+                loadTasks();
+            } else if (currentPage === 'completed') {
+                loadCompletedTasks();
+            } else if (currentPage === 'history') {
+                loadHistory();
             }
-        });
+        } else {
+            console.error('Task not found:', taskId);
+            showNotification('Task not found', 'error');
+        }
+    } catch (error) {
+        console.error('Task delete error:', error);
+        showNotification('Failed to delete task', 'error');
+    }
+}
+
+// ===== SETTINGS FUNCTIONS =====
+
+// Handle profile update (username change)
+async function handleProfileUpdate(e) {
+    e.preventDefault();
+    console.log('Profile update submitted');
+    
+    const currentUsername = document.getElementById('currentUsername').value;
+    const newUsername = document.getElementById('newUsername').value.trim();
+    
+    console.log('Username change attempt:', { currentUsername, newUsername });
+    
+    if (!newUsername) {
+        showNotification('Please enter a new username', 'error');
+        return;
+    }
+    
+    if (newUsername.length < 3) {
+        showNotification('Username must be at least 3 characters', 'error');
+        return;
+    }
+    
+    if (newUsername === currentUsername) {
+        showNotification('New username is same as current username', 'error');
+        return;
+    }
+    
+    try {
+        // Update current user
+        currentUser = newUsername;
+        localStorage.setItem('currentUser', currentUser);
+        
+        // Update users database
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const userIndex = users.findIndex(u => u.username === currentUsername);
+        if (userIndex !== -1) {
+            users[userIndex].username = newUsername;
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+        
+        // CRITICAL: Transfer tasks from old username to new username
+        const allTasks = JSON.parse(localStorage.getItem('tasks') || '{}');
+        if (allTasks[currentUsername]) {
+            allTasks[newUsername] = allTasks[currentUsername];
+            delete allTasks[currentUsername]; // Remove old username entry
+            localStorage.setItem('tasks', JSON.stringify(allTasks));
+            console.log('Transferred tasks from', currentUsername, 'to', newUsername);
+        }
+        
+        // Update UI
+        updateSidebarUsername();
+        document.getElementById('currentUsername').value = newUsername;
+        document.getElementById('newUsername').value = '';
+        
+        // Reload dashboard with new username
+        loadDashboard();
+        
+        console.log('Username updated successfully for:', newUsername);
+        showNotification('Username updated successfully!', 'success');
+    } catch (error) {
+        console.error('Profile update error:', error);
+        showNotification('Failed to update username', 'error');
+    }
+}
+
+// Handle password update
+async function handlePasswordUpdate(e) {
+    e.preventDefault();
+    console.log('Password update submitted');
+    
+    const oldPassword = document.getElementById('oldPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    console.log('Password change attempt:', { 
+        oldPassword: oldPassword ? '***' : 'empty', 
+        newPassword: newPassword ? '***' : 'empty', 
+        confirmPassword: confirmPassword ? '***' : 'empty' 
+    });
+    
+    // Validation
+    if (!oldPassword || !newPassword || !confirmPassword) {
+        showNotification('Please fill in all password fields', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showNotification('New password must be at least 6 characters', 'error');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showNotification('New passwords do not match', 'error');
+        return;
+    }
+    
+    try {
+        // Verify old password (basic security)
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const user = users.find(u => u.username === currentUser);
+        
+        if (!user || user.password !== oldPassword) {
+            console.log('Password update failed: old password incorrect');
+            showNotification('Old password is incorrect', 'error');
+            return;
+        }
+        
+        // Update password
+        const userIndex = users.findIndex(u => u.username === currentUser);
+        if (userIndex !== -1) {
+            users[userIndex].password = newPassword;
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+        
+        // Clear form
+        document.getElementById('oldPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        
+        console.log('Password updated successfully for:', currentUser);
+        showNotification('Password updated successfully!', 'success');
+    } catch (error) {
+        console.error('Password update error:', error);
+        showNotification('Failed to update password', 'error');
+    }
+}
+
+// ===== CHART FUNCTIONS =====
+
+// Create status chart (pie chart)
+function createStatusChart(data) {
+    const ctx = document.getElementById('statusChart');
+    if (!ctx) {
+        console.error('Status chart canvas not found');
+        return;
+    }
+    
+    // Clear existing chart
+    const existingChart = Chart.getChart(ctx);
+    if (existingChart) {
+        existingChart.destroy();
+    }
+    
+    // Calculate status counts
+    const completed = data.filter(task => task.status === 'Completed').length;
+    const pending = data.filter(task => task.status === 'Pending').length;
+    const inProgress = data.filter(task => task.status === 'In Progress').length;
+    
+    console.log('Chart data:', { completed, pending, inProgress });
+    
+    new Chart(ctx.getContext('2d'), {
+        type: 'doughnut', // Pie chart
+        data: {
+            labels: ['Completed', 'Pending', 'In Progress'],
+            datasets: [{
+                data: [completed, pending, inProgress],
+                backgroundColor: [
+                    '#10b981', // success green
+                    '#6b7280', // gray for pending
+                    '#374151'  // accent for in progress
+                ],
+                borderWidth: 2,
+                borderColor: '#1e293b'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#e5e7eb',
+                        padding: 20,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    titleColor: '#e5e7eb',
+                    bodyColor: '#e5e7eb',
+                    borderColor: '#374151',
+                    borderWidth: 1
+                }
+            }
+        }
     });
 }
 
-// ===== INITIALIZATION =====
-
-window.onload = () => {
-    console.log("APP LOADED");
-
-    // Check if user is logged in
-    const currentUser = localStorage.getItem("currentUser");
-    if (currentUser) {
-        showApp();
-        renderTasks();
-        updateDashboard();
-    } else {
-        showAuth();
+// Create weekly chart
+function createWeeklyChart(data) {
+    const ctx = document.getElementById('weeklyChart');
+    if (!ctx) {
+        console.error('Weekly chart canvas not found');
+        return;
     }
+    
+    // Clear existing chart
+    const existingChart = Chart.getChart(ctx);
+    if (existingChart) {
+        existingChart.destroy();
+    }
+    
+    // Generate weekly data (mock data if no real data)
+    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const weeklyData = [3, 5, 2, 8, 4, 6, 1]; // Mock data
+    
+    new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: weekDays,
+            datasets: [{
+                label: 'Tasks Created',
+                data: weeklyData,
+                borderColor: '#374151',
+                backgroundColor: 'rgba(55, 65, 81, 0.1)',
+                tension: 0.4,
+                borderWidth: 2,
+                pointBackgroundColor: '#374151',
+                pointBorderColor: '#1e293b',
+                pointBorderWidth: 2,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#e5e7eb'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#9ca3af'
+                    },
+                    grid: {
+                        color: '#374151',
+                        drawBorder: false
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#9ca3af'
+                    },
+                    grid: {
+                        color: '#374151',
+                        drawBorder: false
+                    },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
 
-    // Setup login button
-    const loginBtn = document.querySelector("#loginBtn");
+// ===== UTILITY FUNCTIONS =====
+
+// Modal functions (placeholder for future use)
+function showAddTaskModal() {
+    showNotification('Add task modal coming soon!', 'info');
+}
+
+// Notification function
+function showNotification(message, type = 'info') {
+    console.log('Notification:', message, type);
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// ===== CRITICAL: FIX ALL NAV BUTTONS =====
+function initializeEventListeners() {
+    console.log('Initializing event listeners...');
+    
+    // Auth buttons
+    const loginBtn = document.getElementById('loginBtn');
     if (loginBtn) {
-        loginBtn.addEventListener("click", loginUser);
-        console.log("✅ Login button attached");
+        loginBtn.addEventListener('click', handleLogin);
+        console.log('Login button listener attached');
+    } else {
+        console.error('Login button not found');
     }
-
-    // Setup create account button (if exists)
-    const createBtn = document.querySelector("#createAccountBtn");
-    if (createBtn) {
-        createBtn.addEventListener("click", createAccount);
-        console.log("✅ Create account button attached");
-    }
-
-    // Setup add task button
-    const addBtn = document.getElementById("addTaskBtn");
-    if (addBtn) {
-        addBtn.addEventListener("click", addTask);
-        console.log("✅ Add task button attached");
-    }
-
-    // Setup task input for Enter key
-    const taskInput = document.getElementById("taskInput");
-    if (taskInput) {
-        taskInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                addTask();
-            }
+    
+    // Create Account button
+    const signupBtn = document.getElementById('signupBtn');
+    if (signupBtn) {
+        signupBtn.addEventListener('click', function() {
+            console.log('Create Account button clicked');
+            showSignup();
         });
+        console.log('Create Account button listener attached');
+    } else {
+        console.error('Create Account button not found');
     }
-
-    // Setup navigation
-    setupNavigation();
-
-    // Setup logout
-    const logoutBtn = document.getElementById("logoutBtn");
+    
+    // Forgot Password button
+    const forgotBtn = document.getElementById('forgotBtn');
+    if (forgotBtn) {
+        forgotBtn.addEventListener('click', function() {
+            console.log('Forgot Password button clicked');
+            showForgotPassword();
+        });
+        console.log('Forgot Password button listener attached');
+    } else {
+        console.error('Forgot Password button not found');
+    }
+    
+    // Create account form
+    const createAccountBtn = document.getElementById('createAccountBtn');
+    if (createAccountBtn) {
+        createAccountBtn.addEventListener('click', handleSignup);
+        console.log('Create Account form listener attached');
+    } else {
+        console.error('Create Account form button not found');
+    }
+    
+    // Reset password form
+    const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+    if (resetPasswordBtn) {
+        resetPasswordBtn.addEventListener('click', handleForgotPassword);
+        console.log('Reset Password form listener attached');
+    } else {
+        console.error('Reset Password form button not found');
+    }
+    
+    // Back to login buttons
+    const backToLoginBtn = document.getElementById('backToLoginBtn');
+    if (backToLoginBtn) {
+        backToLoginBtn.addEventListener('click', function() {
+            console.log('Back to Login button clicked');
+            showLogin();
+        });
+        console.log('Back to Login button listener attached');
+    }
+    
+    const backToLoginBtn2 = document.getElementById('backToLoginBtn2');
+    if (backToLoginBtn2) {
+        backToLoginBtn2.addEventListener('click', function() {
+            console.log('Back to Login button 2 clicked');
+            showLogin();
+        });
+        console.log('Back to Login button 2 listener attached');
+    }
+    
+    // CRITICAL: FIX ALL NAV BUTTONS WITH PROPER SECTION MAPPING
+    const dashboardBtn = document.getElementById('dashboardBtn');
+    if (dashboardBtn) {
+        dashboardBtn.addEventListener('click', function() {
+            console.log('Dashboard button clicked');
+            navigateToDashboard();
+        });
+        console.log('Dashboard button listener attached');
+    } else {
+        console.error('Dashboard button not found');
+    }
+    
+    const tasksBtn = document.getElementById('tasksBtn');
+    if (tasksBtn) {
+        tasksBtn.addEventListener('click', function() {
+            console.log('Tasks button clicked');
+            navigateToTasks();
+        });
+        console.log('Tasks button listener attached');
+    } else {
+        console.error('Tasks button not found');
+    }
+    
+    const completedBtn = document.getElementById('completedBtn');
+    if (completedBtn) {
+        completedBtn.addEventListener('click', function() {
+            console.log('Completed button clicked');
+            navigateToCompleted();
+        });
+        console.log('Completed button listener attached');
+    } else {
+        console.error('Completed button not found');
+    }
+    
+    const historyBtn = document.getElementById('historyBtn');
+    if (historyBtn) {
+        historyBtn.addEventListener('click', function() {
+            console.log('History button clicked');
+            navigateToHistory();
+        });
+        console.log('History button listener attached');
+    } else {
+        console.error('History button not found');
+    }
+    
+    const analyticsBtn = document.getElementById('analyticsBtn');
+    if (analyticsBtn) {
+        analyticsBtn.addEventListener('click', function() {
+            console.log('Analytics button clicked');
+            navigateToAnalytics();
+        });
+        console.log('Analytics button listener attached');
+    } else {
+        console.error('Analytics button not found');
+    }
+    
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', function() {
+            console.log('Settings button clicked');
+            navigateToSettings();
+        });
+        console.log('Settings button listener attached');
+    } else {
+        console.error('Settings button not found');
+    }
+    
+    const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener("click", () => {
-            if (confirm("Are you sure you want to logout?")) {
-                localStorage.removeItem("currentUser");
-                showAuth();
-                console.log("✅ Logged out successfully");
-            }
-        });
+        logoutBtn.addEventListener('click', logout);
+        console.log('Logout button listener attached');
+    } else {
+        console.error('Logout button not found');
     }
+    
+    // App forms
+    const quickAddForm = document.getElementById('quickAddForm');
+    if (quickAddForm) {
+        quickAddForm.addEventListener('submit', handleQuickAddTask);
+        console.log('Quick add form listener attached');
+    } else {
+        console.error('Quick add form not found');
+    }
+    
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', handleProfileUpdate);
+        console.log('Profile form listener attached');
+    } else {
+        console.error('Profile form not found');
+    }
+    
+    const passwordForm = document.getElementById('passwordForm');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', handlePasswordUpdate);
+        console.log('Password form listener attached');
+    } else {
+        console.error('Password form not found');
+    }
+    
+    console.log('All event listeners initialized successfully');
+}
 
-    console.log("✅ All event listeners attached");
+// Debug function
+window.debugTaskTracker = function() {
+    console.log('=== TASK TRACKER DEBUG ===');
+    console.log('Current user:', currentUser);
+    console.log('Current user tasks:', getCurrentUserTasks());
+    console.log('Current page:', currentPage);
+    
+    // Check localStorage
+    console.log('Users in localStorage:', JSON.parse(localStorage.getItem('users') || '[]'));
+    console.log('All tasks in localStorage:', JSON.parse(localStorage.getItem('tasks') || '{}'));
+    console.log('Current user in localStorage:', localStorage.getItem('currentUser') || 'null');
+    
+    // Check DOM elements
+    const loginBtn = document.getElementById('loginBtn');
+    const signupBtn = document.getElementById('signupBtn');
+    const forgotBtn = document.getElementById('forgotBtn');
+    const dashboardBtn = document.getElementById('dashboardBtn');
+    const tasksBtn = document.getElementById('tasksBtn');
+    const completedBtn = document.getElementById('completedBtn');
+    const analyticsBtn = document.getElementById('analyticsBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    
+    console.log('DOM elements check:');
+    console.log('Login button:', loginBtn ? 'found' : 'NOT FOUND');
+    console.log('Create Account button:', signupBtn ? 'found' : 'NOT FOUND');
+    console.log('Forgot Password button:', forgotBtn ? 'found' : 'NOT FOUND');
+    console.log('Dashboard button:', dashboardBtn ? 'found' : 'NOT FOUND');
+    console.log('Tasks button:', tasksBtn ? 'found' : 'NOT FOUND');
+    console.log('Completed button:', completedBtn ? 'found' : 'NOT FOUND');
+    console.log('Analytics button:', analyticsBtn ? 'found' : 'NOT FOUND');
+    console.log('Settings button:', settingsBtn ? 'found' : 'NOT FOUND');
+    console.log('Username input:', usernameInput ? 'found' : 'NOT FOUND');
+    console.log('Password input:', passwordInput ? 'found' : 'NOT FOUND');
+    
+    // Test input values and properties
+    if (usernameInput) {
+        console.log('Username input value:', usernameInput.value);
+        console.log('Username input disabled:', usernameInput.disabled);
+        console.log('Username input readonly:', usernameInput.readOnly);
+    }
+    
+    if (passwordInput) {
+        console.log('Password input value:', passwordInput.value);
+        console.log('Password input disabled:', passwordInput.disabled);
+        console.log('Password input readonly:', passwordInput.readOnly);
+    }
+    
+    // Check sections
+    const sections = ['loginSection', 'signupSection', 'forgotSection', 'dashboardSection', 'tasksSection', 'completedSection', 'historySection', 'analyticsSection', 'settingsSection'];
+    sections.forEach(sectionId => {
+        const section = document.getElementById(sectionId);
+        console.log(`${sectionId}:`, section ? 'found' : 'NOT FOUND', section ? `display: ${section.style.display}` : '');
+    });
+    
+    // Show user-specific data separation
+    if (currentUser) {
+        console.log('=== USER-SPECIFIC DATA ===');
+        console.log(`${currentUser} has ${getCurrentUserTasks().length} tasks`);
+        console.log('Sample tasks:', getCurrentUserTasks().slice(0, 3));
+    }
+    
+    console.log('=== END DEBUG ===');
 };
 
-// ===== GLOBAL FUNCTIONS =====
-
-// Make functions globally accessible
-window.loginUser = loginUser;
-window.createAccount = createAccount;
-window.addTask = addTask;
-window.toggleTask = toggleTask;
+// Add debug shortcut
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        window.debugTaskTracker();
+    }
+});
