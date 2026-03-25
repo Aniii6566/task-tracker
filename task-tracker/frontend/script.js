@@ -199,13 +199,13 @@ function updateMissedTasks() {
 function showApp() {
     document.getElementById("authContainer").style.display = "none";
     document.getElementById("appContainer").style.display = "flex";
-    console.log("🏠 Showing App - Auth hidden, App visible");
+    console.log("✅ Showing App - Auth hidden, App visible");
 }
 
 function showAuth() {
     document.getElementById("authContainer").style.display = "flex";
     document.getElementById("appContainer").style.display = "none";
-    console.log("🔐 Showing Auth - App hidden, Auth visible");
+    console.log("✅ Showing Auth - App hidden, Auth visible");
 }
 
 // ===== AUTHENTICATION SYSTEM =====
