@@ -9,7 +9,7 @@ const addTaskBtn = document.getElementById('addTaskBtn');
 const taskList = document.getElementById('taskList');
 const emptyState = document.getElementById('emptyState');
 
-// Initialize
+// Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Task Tracker initialized');
     
@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Render initial state
     renderTasks();
+    
+    // Focus on input
+    taskInput.focus();
 });
 
 // Setup Event Listeners
@@ -44,7 +47,7 @@ function addTask() {
     
     // Validate input
     if (taskText === '') {
-        alert('Please enter a task');
+        shakeInput();
         return;
     }
     
@@ -56,7 +59,7 @@ function addTask() {
     };
     
     // Add to tasks array
-    tasks.push(newTask);
+    tasks.unshift(newTask); // Add to beginning for newest first
     
     // Save to localStorage
     saveTasks();
@@ -96,7 +99,7 @@ function renderTasks() {
         taskList.style.display = 'none';
     } else {
         emptyState.style.display = 'none';
-        taskList.style.display = 'block';
+        taskList.style.display = 'flex';
         
         // Render each task
         tasks.forEach(task => {
@@ -111,15 +114,25 @@ function renderTasks() {
 // Create Task Element
 function createTaskElement(task) {
     const taskDiv = document.createElement('div');
-    taskDiv.className = 'task-item';
+    taskDiv.className = 'task-card';
     taskDiv.dataset.taskId = task.id;
     
     taskDiv.innerHTML = `
         <span class="task-text">${escapeHtml(task.text)}</span>
-        <button class="delete-btn" onclick="deleteTask(${task.id})">Delete</button>
+        <button class="delete-btn" onclick="deleteTask(${task.id})" aria-label="Delete task">
+            Delete
+        </button>
     `;
     
     return taskDiv;
+}
+
+// Shake Input Animation (for empty input)
+function shakeInput() {
+    taskInput.style.animation = 'shake 0.3s ease-in-out';
+    setTimeout(() => {
+        taskInput.style.animation = '';
+    }, 300);
 }
 
 // Escape HTML to prevent XSS
@@ -131,20 +144,40 @@ function escapeHtml(text) {
 
 // Local Storage Functions
 function saveTasks() {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-    console.log('Tasks saved to localStorage');
+    try {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        console.log('Tasks saved to localStorage');
+    } catch (error) {
+        console.error('Error saving tasks:', error);
+    }
 }
 
 function loadTasks() {
-    const savedTasks = localStorage.getItem('tasks');
-    if (savedTasks) {
-        tasks = JSON.parse(savedTasks);
-        console.log('Tasks loaded from localStorage:', tasks.length);
-    } else {
+    try {
+        const savedTasks = localStorage.getItem('tasks');
+        if (savedTasks) {
+            tasks = JSON.parse(savedTasks);
+            console.log('Tasks loaded from localStorage:', tasks.length);
+        } else {
+            tasks = [];
+            console.log('No saved tasks found');
+        }
+    } catch (error) {
+        console.error('Error loading tasks:', error);
         tasks = [];
-        console.log('No saved tasks found');
     }
 }
 
 // Global function for delete button (needed for onclick attribute)
 window.deleteTask = deleteTask;
+
+// Add shake animation to CSS
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+`;
+document.head.appendChild(shakeStyle);
