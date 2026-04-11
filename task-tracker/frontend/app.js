@@ -1,4 +1,4 @@
-// ===== DAILY TASK TRACKER - COMPLETED TASKS UI FIX =====
+// ===== DAILY TASK TRACKER - ADVANCED STRICT STREAK SYSTEM =====
 
 // Application State
 let tasks = {};
@@ -8,10 +8,10 @@ let currentView = 'tasks';
 let currentPeriod = 'daily';
 let editingTaskId = null;
 
-// Streak System
+// Advanced Streak System
 let streak = {
     days: 0,
-    lastCompletedDate: null
+    lastCheckedDate: null
 };
 
 // DOM Elements
@@ -20,6 +20,9 @@ const elements = {
     currentDate: document.getElementById('currentDate'),
     streakDisplay: document.getElementById('streakDisplay'),
     streakCount: document.getElementById('streakCount'),
+    
+    // Message System
+    messageContainer: null,
     
     // Navigation
     tabBtns: document.querySelectorAll('.tab-btn'),
@@ -48,6 +51,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get today's date
     todayDate = getTodayDate();
     
+    // Create message container
+    createMessageContainer();
+    
     // Load data from localStorage
     loadTasks();
     loadStreak();
@@ -59,6 +65,9 @@ document.addEventListener('DOMContentLoaded', function() {
     updateDateDisplay();
     updateStreakDisplay();
     renderTasks();
+    
+    // Check and update streak for previous day
+    checkAndUpdateStreak();
     
     // Focus on input
     elements.taskInput.focus();
@@ -72,6 +81,13 @@ document.addEventListener('DOMContentLoaded', function() {
 function getTodayDate() {
     const today = new Date();
     return today.toISOString().split('T')[0]; // YYYY-MM-DD format
+}
+
+// Get Yesterday's Date
+function getYesterdayDate() {
+    const yesterday = new Date(todayDate);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split('T')[0];
 }
 
 // Load Tasks from localStorage
@@ -113,7 +129,7 @@ function getTodayTasks() {
     return tasks[todayDate] || [];
 }
 
-// ===== STREAK FUNCTIONS =====
+// ===== ADVANCED STREAK SYSTEM =====
 
 // Load Streak from localStorage
 function loadStreak() {
@@ -123,12 +139,12 @@ function loadStreak() {
             streak = JSON.parse(savedStreak);
             console.log('Streak loaded:', streak);
         } else {
-            streak = { days: 0, lastCompletedDate: null };
+            streak = { days: 0, lastCheckedDate: null };
             console.log('No saved streak found');
         }
     } catch (error) {
         console.error('Error loading streak:', error);
-        streak = { days: 0, lastCompletedDate: null };
+        streak = { days: 0, lastCheckedDate: null };
     }
 }
 
@@ -142,64 +158,130 @@ function saveStreak() {
     }
 }
 
-// Update Streak Logic
-function updateStreak() {
-    const todayTasks = getTodayTasks();
-    const hasCompletedTasks = todayTasks.some(task => task.completed);
-    
-    if (hasCompletedTasks) {
-        // Check if we already updated streak today
-        if (streak.lastCompletedDate !== todayDate) {
-            // Check if yesterday had completed tasks
-            const yesterday = new Date(todayDate);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
-            const yesterdayTasks = tasks[yesterdayStr] || [];
-            const yesterdayHadCompleted = yesterdayTasks.some(task => task.completed);
-            
-            if (yesterdayHadCompleted || streak.lastCompletedDate === yesterdayStr) {
-                // Continue streak
-                streak.days++;
-            } else {
-                // Start new streak
-                streak.days = 1;
-            }
-            
-            // Update last completed date
-            streak.lastCompletedDate = todayDate;
-            saveStreak();
-            updateStreakDisplay();
-        }
-    } else {
-        // If no completed tasks today and we had a streak, check if we need to reset
-        if (streak.lastCompletedDate !== todayDate) {
-            // Check if we missed a day
-            const yesterday = new Date(todayDate);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
-            
-            if (streak.lastCompletedDate !== yesterdayStr && streak.lastCompletedDate !== null) {
-                // We missed a day, reset streak
-                streak.days = 0;
-                streak.lastCompletedDate = null;
-                saveStreak();
-                updateStreakDisplay();
-            }
-        }
+// Calculate Completion Percentage
+function calculateCompletion(dayTasks) {
+    if (!dayTasks || dayTasks.length === 0) {
+        return { completed: 0, total: 0, percentage: 0, isComplete: false };
     }
     
-    console.log('Streak updated:', streak);
+    const total = dayTasks.length;
+    const completed = dayTasks.filter(task => task.completed).length;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const isComplete = percentage === 100;
+    
+    return {
+        completed,
+        total,
+        percentage,
+        isComplete
+    };
 }
 
-// Update Streak Display
-function updateStreakDisplay() {
+// Check and Update Streak - CORE LOGIC
+function checkAndUpdateStreak() {
+    const yesterday = getYesterdayDate();
+    
+    // Only evaluate if yesterday hasn't been checked yet
+    if (streak.lastCheckedDate === yesterday) {
+        console.log('Yesterday already evaluated, skipping');
+        return;
+    }
+    
+    const yesterdayTasks = tasks[yesterday] || [];
+    const completion = calculateCompletion(yesterdayTasks);
+    
+    console.log('Evaluating yesterday:', yesterday, completion);
+    
+    // Only evaluate if there were tasks yesterday
+    if (completion.total > 0) {
+        let message = '';
+        let messageType = 'info';
+        let oldStreak = streak.days;
+        
+        if (completion.isComplete) {
+            // 100% completion - increase streak
+            streak.days++;
+            message = `🔥 Great job! You completed all tasks yesterday. Streak +1`;
+            messageType = 'success';
+        } else {
+            // Not 100% completion - decrease streak
+            streak.days = Math.max(0, streak.days - 2);
+            message = `⚠️ You missed some tasks yesterday. Streak -2`;
+            messageType = 'warning';
+        }
+        
+        // Update last checked date
+        streak.lastCheckedDate = yesterday;
+        
+        // Save streak
+        saveStreak();
+        
+        // Update UI
+        updateStreakDisplay(oldStreak, streak.days, messageType);
+        
+        // Show message
+        showMessage(message, messageType);
+        
+        console.log('Streak updated:', { old: oldStreak, new: streak.days, reason: completion.isComplete ? '100% complete' : 'incomplete' });
+    } else {
+        console.log('No tasks yesterday, streak unchanged');
+    }
+}
+
+// Update Streak Display with Animation
+function updateStreakDisplay(oldStreak = null, newStreak = null, changeType = null) {
     elements.streakCount.textContent = streak.days;
     
-    // Add animation for streak changes
-    elements.streakDisplay.style.animation = 'pulse 0.5s ease-out';
+    // Add color animation based on change
+    if (changeType === 'success') {
+        elements.streakDisplay.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+        elements.streakDisplay.style.animation = 'pulse 0.5s ease-out';
+    } else if (changeType === 'warning') {
+        elements.streakDisplay.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        elements.streakDisplay.style.animation = 'shake 0.5s ease-out';
+    }
+    
+    // Reset animation and color after delay
     setTimeout(() => {
         elements.streakDisplay.style.animation = '';
+        elements.streakDisplay.style.background = 'linear-gradient(135deg, var(--accent-warning), #f97316)';
     }, 500);
+}
+
+// Create Message Container
+function createMessageContainer() {
+    elements.messageContainer = document.createElement('div');
+    elements.messageContainer.id = 'messageContainer';
+    elements.messageContainer.className = 'message-container';
+    document.body.appendChild(elements.messageContainer);
+}
+
+// Show Message
+function showMessage(text, type = 'info') {
+    const message = document.createElement('div');
+    message.className = `message message-${type}`;
+    message.innerHTML = `
+        <div class="message-content">
+            <span class="message-text">${text}</span>
+            <button class="message-close" onclick="this.parentElement.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    elements.messageContainer.appendChild(message);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (message.parentElement) {
+            message.remove();
+        }
+    }, 5000);
+    
+    // Add slide-in animation
+    setTimeout(() => {
+        message.classList.add('show');
+    }, 10);
 }
 
 // ===== TASK FUNCTIONS =====
@@ -244,7 +326,7 @@ function addTask() {
     console.log('Task added:', newTask);
 }
 
-// Toggle Task Function - FIXED
+// Toggle Task Function
 function toggleTask(taskId) {
     const task = getTodayTasks().find(t => t.id === taskId);
     if (!task) return;
@@ -255,9 +337,6 @@ function toggleTask(taskId) {
     
     // Save to localStorage
     saveTasks();
-    
-    // Update streak
-    updateStreak();
     
     // Update UI
     renderTasks();
@@ -340,9 +419,6 @@ function deleteTask(taskId) {
             // Save to localStorage
             saveTasks();
             
-            // Update streak
-            updateStreak();
-            
             // Update UI
             renderTasks();
         }, 300);
@@ -353,11 +429,11 @@ function deleteTask(taskId) {
 
 // ===== RENDER FUNCTIONS =====
 
-// Render Tasks - FIXED LOGIC
+// Render Tasks
 function renderTasks() {
     const todayTasks = getTodayTasks();
     
-    // CRITICAL FIX: Properly separate active and completed tasks
+    // Separate active and completed tasks
     const activeTasks = todayTasks.filter(task => !task.completed);
     const completedTasks = todayTasks.filter(task => task.completed);
     
@@ -371,7 +447,7 @@ function renderTasks() {
     elements.activeTasks.innerHTML = '';
     elements.completedTasks.innerHTML = '';
     
-    // Render active tasks ONLY in "Today's Tasks" with interactive checkboxes
+    // Render active tasks with interactive checkboxes
     if (activeTasks.length === 0) {
         elements.activeTasks.innerHTML = `
             <div class="empty-state">
@@ -383,7 +459,7 @@ function renderTasks() {
         elements.activeTasks.innerHTML = activeTasks.map(task => createActiveTaskCard(task)).join('');
     }
     
-    // Render completed tasks ONLY in "Completed Tasks" with static check icons
+    // Render completed tasks with static check icons
     if (completedTasks.length === 0) {
         elements.completedTasks.innerHTML = `
             <div class="empty-state">
@@ -396,7 +472,7 @@ function renderTasks() {
     }
 }
 
-// Create Active Task Card - WITH INTERACTIVE CHECKBOX
+// Create Active Task Card
 function createActiveTaskCard(task) {
     return `
         <div class="task-card" data-task-id="${task.id}">
@@ -423,7 +499,7 @@ function createActiveTaskCard(task) {
     `;
 }
 
-// Create Completed Task Card - WITH STATIC CHECK ICON
+// Create Completed Task Card
 function createCompletedTaskCard(task) {
     return `
         <div class="task-card completed" data-task-id="${task.id}">
@@ -722,6 +798,9 @@ function checkDateChange() {
         updateDateDisplay();
         renderTasks();
         
+        // Check streak for previous day
+        checkAndUpdateStreak();
+        
         console.log('Date changed, new day:', todayDate);
     }
 }
@@ -762,13 +841,77 @@ function shakeElement(element) {
     }, 300);
 }
 
-// Add animations
+// Add animations and styles
 const animationsStyle = document.createElement('style');
 animationsStyle.textContent = `
     @keyframes shake {
         0%, 100% { transform: translateX(0); }
         25% { transform: translateX(-5px); }
         75% { transform: translateX(5px); }
+    }
+    
+    .message-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        max-width: 400px;
+    }
+    
+    .message {
+        background: var(--bg-card);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--spacing-sm);
+        box-shadow: var(--shadow-lg);
+        transform: translateX(100%);
+        opacity: 0;
+        transition: all var(--transition-normal);
+    }
+    
+    .message.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    
+    .message-success {
+        border-left: 4px solid var(--accent-primary);
+    }
+    
+    .message-warning {
+        border-left: 4px solid var(--accent-danger);
+    }
+    
+    .message-info {
+        border-left: 4px solid var(--accent-secondary);
+    }
+    
+    .message-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--spacing-md);
+    }
+    
+    .message-text {
+        flex: 1;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .message-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: var(--spacing-xs);
+        border-radius: var(--radius-sm);
+        transition: all var(--transition-fast);
+    }
+    
+    .message-close:hover {
+        background-color: var(--bg-hover);
+        color: var(--text-primary);
     }
 `;
 document.head.appendChild(animationsStyle);
