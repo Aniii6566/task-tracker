@@ -1,4 +1,4 @@
-// ===== DAILY TASK TRACKER - BUG-FIXED VERSION =====
+// ===== DAILY TASK TRACKER - IMPROVED WITH STREAK SYSTEM =====
 
 // Application State
 let tasks = {};
@@ -8,10 +8,18 @@ let currentView = 'tasks';
 let currentPeriod = 'daily';
 let editingTaskId = null;
 
+// Streak System
+let streak = {
+    days: 0,
+    lastCompletedDate: null
+};
+
 // DOM Elements
 const elements = {
     // Header
     currentDate: document.getElementById('currentDate'),
+    streakDisplay: document.getElementById('streakDisplay'),
+    streakCount: document.getElementById('streakCount'),
     
     // Navigation
     tabBtns: document.querySelectorAll('.tab-btn'),
@@ -42,12 +50,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load data from localStorage
     loadTasks();
+    loadStreak();
     
     // Setup event listeners
     setupEventListeners();
     
     // Update UI
     updateDateDisplay();
+    updateStreakDisplay();
     renderTasks();
     
     // Focus on input
@@ -103,6 +113,95 @@ function getTodayTasks() {
     return tasks[todayDate] || [];
 }
 
+// ===== STREAK FUNCTIONS =====
+
+// Load Streak from localStorage
+function loadStreak() {
+    try {
+        const savedStreak = localStorage.getItem('taskStreak');
+        if (savedStreak) {
+            streak = JSON.parse(savedStreak);
+            console.log('Streak loaded:', streak);
+        } else {
+            streak = { days: 0, lastCompletedDate: null };
+            console.log('No saved streak found');
+        }
+    } catch (error) {
+        console.error('Error loading streak:', error);
+        streak = { days: 0, lastCompletedDate: null };
+    }
+}
+
+// Save Streak to localStorage
+function saveStreak() {
+    try {
+        localStorage.setItem('taskStreak', JSON.stringify(streak));
+        console.log('Streak saved:', streak);
+    } catch (error) {
+        console.error('Error saving streak:', error);
+    }
+}
+
+// Update Streak Logic
+function updateStreak() {
+    const todayTasks = getTodayTasks();
+    const hasCompletedTasks = todayTasks.some(task => task.completed);
+    
+    if (hasCompletedTasks) {
+        // Check if we already updated streak today
+        if (streak.lastCompletedDate !== todayDate) {
+            // Check if yesterday had completed tasks
+            const yesterday = new Date(todayDate);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            const yesterdayTasks = tasks[yesterdayStr] || [];
+            const yesterdayHadCompleted = yesterdayTasks.some(task => task.completed);
+            
+            if (yesterdayHadCompleted || streak.lastCompletedDate === yesterdayStr) {
+                // Continue streak
+                streak.days++;
+            } else {
+                // Start new streak
+                streak.days = 1;
+            }
+            
+            // Update last completed date
+            streak.lastCompletedDate = todayDate;
+            saveStreak();
+            updateStreakDisplay();
+        }
+    } else {
+        // If no completed tasks today and we had a streak, check if we need to reset
+        if (streak.lastCompletedDate !== todayDate) {
+            // Check if we missed a day
+            const yesterday = new Date(todayDate);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            
+            if (streak.lastCompletedDate !== yesterdayStr && streak.lastCompletedDate !== null) {
+                // We missed a day, reset streak
+                streak.days = 0;
+                streak.lastCompletedDate = null;
+                saveStreak();
+                updateStreakDisplay();
+            }
+        }
+    }
+    
+    console.log('Streak updated:', streak);
+}
+
+// Update Streak Display
+function updateStreakDisplay() {
+    elements.streakCount.textContent = streak.days;
+    
+    // Add animation for streak changes
+    elements.streakDisplay.style.animation = 'pulse 0.5s ease-out';
+    setTimeout(() => {
+        elements.streakDisplay.style.animation = '';
+    }, 500);
+}
+
 // ===== TASK FUNCTIONS =====
 
 // Add Task Function
@@ -156,6 +255,9 @@ function toggleTask(taskId) {
     
     // Save to localStorage
     saveTasks();
+    
+    // Update streak
+    updateStreak();
     
     // Update UI
     renderTasks();
@@ -237,6 +339,9 @@ function deleteTask(taskId) {
             
             // Save to localStorage
             saveTasks();
+            
+            // Update streak
+            updateStreak();
             
             // Update UI
             renderTasks();
@@ -629,16 +734,16 @@ function shakeElement(element) {
     }, 300);
 }
 
-// Add shake animation
-const shakeStyle = document.createElement('style');
-shakeStyle.textContent = `
+// Add animations
+const animationsStyle = document.createElement('style');
+animationsStyle.textContent = `
     @keyframes shake {
         0%, 100% { transform: translateX(0); }
         25% { transform: translateX(-5px); }
         75% { transform: translateX(5px); }
     }
 `;
-document.head.appendChild(shakeStyle);
+document.head.appendChild(animationsStyle);
 
 // Make functions globally available
 window.toggleTask = toggleTask;

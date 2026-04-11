@@ -1,4 +1,4 @@
-/* ===== DAILY TASK TRACKER - ANALYTICS DASHBOARD ===== */
+/* ===== DAILY TASK TRACKER - IMPROVED VERSION ===== */
 
 /* CSS Variables */
 :root {
@@ -42,7 +42,7 @@
     
     /* Spacing */
     --spacing-xs: 8px;
-    --spacing-sm: 16px;
+    --spacing-sm: 12px;
     --spacing-md: 24px;
     --spacing-lg: 32px;
     --spacing-xl: 48px;
@@ -88,6 +88,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: var(--spacing-md);
 }
 
 .header-left {
@@ -109,9 +110,30 @@ body {
     font-weight: 500;
 }
 
+/* Streak Display */
+.streak-display {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: linear-gradient(135deg, var(--accent-warning), #f97316);
+    color: var(--text-inverse);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: var(--shadow-md);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
 .header-right {
     display: flex;
     align-items: center;
+    gap: var(--spacing-md);
 }
 
 .nav-tabs {
@@ -283,7 +305,7 @@ body {
     min-height: 300px;
 }
 
-/* Task Card */
+/* Task Card - IMPROVED */
 .task-card {
     background-color: var(--bg-tertiary);
     border: 1px solid var(--border-primary);
@@ -303,20 +325,12 @@ body {
     border-color: var(--accent-primary);
 }
 
-.task-card.completed {
-    opacity: 0.6;
-}
-
-.task-card.completed .task-title {
-    text-decoration: line-through;
-    color: var(--text-muted);
-}
-
+/* FIXED: Task Content Layout */
 .task-content {
-    flex: 1;
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
+    flex: 1;
     min-width: 0;
 }
 
@@ -356,6 +370,16 @@ body {
     color: var(--text-primary);
     word-break: break-word;
     flex: 1;
+}
+
+/* FIXED: Completed Task Styling */
+.task-card.completed {
+    opacity: 1; /* FIXED: Not too faded */
+}
+
+.task-card.completed .task-title {
+    text-decoration: line-through;
+    color: var(--text-muted); /* FIXED: Light gray instead of opacity */
 }
 
 .task-actions {
@@ -555,6 +579,9 @@ body {
 @media (max-width: 768px) {
     .header-content {
         padding: 0 var(--spacing-sm);
+        flex-direction: column;
+        gap: var(--spacing-md);
+        align-items: stretch;
     }
     
     .main-content {
@@ -563,12 +590,6 @@ body {
     
     .app-title {
         font-size: 24px;
-    }
-    
-    .header-content {
-        flex-direction: column;
-        gap: var(--spacing-md);
-        align-items: stretch;
     }
     
     .tasks-container {
@@ -602,10 +623,6 @@ body {
 }
 
 @media (max-width: 480px) {
-    .header-content {
-        padding: 0 var(--spacing-sm);
-    }
-    
     .main-content {
         padding: var(--spacing-sm);
     }
