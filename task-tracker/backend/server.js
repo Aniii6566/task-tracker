@@ -1,142 +1,98 @@
+// ===== PREMIUM TASK TRACKER - BACKEND SERVER =====
+
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
+
+// Import routes
+const taskRoutes = require('./routes');
+
+// Initialize Express app
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5500'],
+    credentials: true
+}));
 
-// Mock database (in production, use real database)
-let tasks = [];
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.get('/api/tasks', (req, res) => {
-    console.log('📊 GET /api/tasks - Fetching all tasks');
-    res.json({ success: true, tasks: tasks });
+// Request logging middleware
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
 });
 
-app.post('/api/tasks', (req, res) => {
-    console.log('➕ POST /api/tasks - Adding new task');
-    console.log('📤 Request body:', req.body);
-    
-    const { title, status, date, completed, user, created_at } = req.body;
-    
-    // Validation
-    if (!title || !user) {
-        console.log('❌ Validation failed - missing title or user');
-        return res.status(400).json({ 
-            success: false, 
-            error: 'Title and user are required' 
-        });
-    }
-    
-    const newTask = {
-        id: Date.now(),
-        title: title || 'Untitled Task',
-        status: status || 'pending',
-        date: date || new Date().toISOString().split('T')[0],
-        completed: completed || false,
-        user: user || 'anonymous',
-        created_at: created_at || new Date().toISOString()
-    };
-    
-    tasks.push(newTask);
-    
-    console.log('✅ Task created successfully:', newTask);
-    console.log('📊 Total tasks now:', tasks.length);
-    
-    res.json({ 
-        success: true, 
-        task: newTask,
-        message: 'Task created successfully' 
-    });
-});
+// Serve static files (frontend)
+app.use(express.static(path.join(__dirname, '../frontend')));
 
-app.put('/api/tasks/:id', (req, res) => {
-    console.log(`🔄 PUT /api/tasks/${req.params.id} - Updating task`);
-    console.log('📤 Request body:', req.body);
-    
-    const taskId = parseInt(req.params.id);
-    const taskIndex = tasks.findIndex(t => t.id === taskId);
-    
-    if (taskIndex === -1) {
-        console.log('❌ Task not found:', taskId);
-        return res.status(404).json({ 
-            success: false, 
-            error: 'Task not found' 
-        });
-    }
-    
-    const updatedTask = { ...tasks[taskIndex], ...req.body };
-    tasks[taskIndex] = updatedTask;
-    
-    console.log('✅ Task updated successfully:', updatedTask);
-    
-    res.json({ 
-        success: true, 
-        task: updatedTask,
-        message: 'Task updated successfully' 
-    });
-});
+// API Routes
+app.use('/api', taskRoutes);
 
-app.delete('/api/tasks/:id', (req, res) => {
-    console.log(`🗑️ DELETE /api/tasks/${req.params.id} - Deleting task`);
-    
-    const taskId = parseInt(req.params.id);
-    const taskIndex = tasks.findIndex(t => t.id === taskId);
-    
-    if (taskIndex === -1) {
-        console.log('❌ Task not found:', taskId);
-        return res.status(404).json({ 
-            success: false, 
-            error: 'Task not found' 
-        });
-    }
-    
-    const deletedTask = tasks.splice(taskIndex, 1)[0];
-    
-    console.log('✅ Task deleted successfully:', deletedTask);
-    console.log('📊 Total tasks now:', tasks.length);
-    
-    res.json({ 
-        success: true, 
-        task: deletedTask,
-        message: 'Task deleted successfully' 
-    });
-});
-
-// Health check
+// Health check endpoint
 app.get('/api/health', (req, res) => {
-    console.log('🏥 Health check requested');
-    res.json({ 
-        success: true, 
-        message: 'Server is running',
-        timestamp: new Date().toISOString()
+    res.json({
+        status: 'OK',
+        message: 'Task Tracker API is running',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0'
     });
+});
+
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
+    res.status(404).json({
+        success: false,
+        error: 'API endpoint not found',
+        message: `Cannot ${req.method} ${req.url}`
+    });
+});
+
+// Serve frontend for all other routes (SPA support)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('❌ Server error:', err);
-    res.status(500).json({ 
-        success: false, 
-        error: 'Internal server error' 
-    });
-});
-
-// 404 handler
-app.use((req, res) => {
-    console.log('❌ Route not found:', req.method, req.url);
-    res.status(404).json({ 
-        success: false, 
-        error: 'Route not found' 
+    console.error('Server Error:', err);
+    
+    // Don't send error details in production
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    res.status(err.status || 500).json({
+        success: false,
+        error: isDevelopment ? err.message : 'Internal Server Error',
+        ...(isDevelopment && { stack: err.stack })
     });
 });
 
 // Start server
-app.listen(port, () => {
-    console.log(`🚀 Task Tracker API Server running on port ${port}`);
-    console.log(`📡 API endpoints available at http://localhost:${port}/api`);
-    console.log('🏥 Health check: http://localhost:3000/api/health');
+app.listen(PORT, () => {
+    console.log(`
+    ========================================
+    Task Tracker Server Started Successfully!
+    ========================================
+    Server running on: http://localhost:${PORT}
+    API Base URL: http://localhost:${PORT}/api
+    Frontend: http://localhost:${PORT}
+    Environment: ${process.env.NODE_ENV || 'development'}
+    ========================================
+    `);
 });
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down gracefully...');
+    process.exit(0);
+});
+
+process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down gracefully...');
+    process.exit(0);
+});
+
+module.exports = app;
