@@ -1,4 +1,4 @@
-/* ===== DAILY TASK TRACKER - PREMIUM DASHBOARD ===== */
+/* ===== DAILY TASK TRACKER - ANALYTICS DASHBOARD ===== */
 
 /* CSS Variables */
 :root {
@@ -30,18 +30,15 @@
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 20px rgba(34, 197, 94, 0.3);
     
     /* Transitions */
     --transition-fast: 0.15s ease;
     --transition-normal: 0.3s ease;
-    --transition-slow: 0.5s ease;
     
     /* Border Radius */
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
-    --radius-xl: 20px;
     
     /* Spacing */
     --spacing-xs: 8px;
@@ -115,41 +112,35 @@ body {
 .header-right {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
 }
 
-.streak-badge {
+.nav-tabs {
     display: flex;
-    align-items: center;
     gap: var(--spacing-xs);
-    background: linear-gradient(135deg, var(--accent-warning), #f97316);
-    color: var(--text-inverse);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-lg);
-    font-weight: 600;
-    font-size: 14px;
-    box-shadow: var(--shadow-md);
+    background-color: var(--bg-tertiary);
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-md);
 }
 
-.history-btn {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-md);
+.tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
     padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     transition: all var(--transition-fast);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
 }
 
-.history-btn:hover {
-    background-color: var(--bg-hover);
-    border-color: var(--accent-primary);
-    transform: translateY(-1px);
+.tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.tab-btn.active {
+    background-color: var(--accent-primary);
+    color: var(--text-inverse);
 }
 
 /* Main Content */
@@ -161,107 +152,30 @@ body {
     width: 100%;
 }
 
-/* Progress Section */
-.progress-section {
-    margin-bottom: var(--spacing-xl);
-}
-
-.progress-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
-}
-
-.progress-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    transition: all var(--transition-normal);
-}
-
-.progress-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--accent-primary);
-}
-
-.progress-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: var(--radius-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: var(--text-inverse);
-    flex-shrink: 0;
-}
-
-.progress-icon.total {
-    background: linear-gradient(135deg, var(--accent-secondary), #2563eb);
-}
-
-.progress-icon.completed {
-    background: linear-gradient(135deg, var(--accent-primary), #16a34a);
-}
-
-.progress-icon.pending {
-    background: linear-gradient(135deg, var(--accent-warning), #f97316);
-}
-
-.progress-info h3 {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-xs);
-    font-weight: 500;
-}
-
-.progress-number {
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--text-primary);
+/* View System */
+.view {
     display: block;
+    animation: fadeIn var(--transition-normal) ease-out;
 }
 
-.progress-bar-container {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
+.view.hidden {
+    display: none;
 }
 
-.progress-bar {
-    width: 100%;
-    height: 16px;
-    background-color: var(--bg-tertiary);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    margin-bottom: var(--spacing-sm);
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-    border-radius: var(--radius-sm);
-    transition: width var(--transition-normal) ease-out;
-    width: 0%;
-}
-
-.progress-percentage {
-    text-align: center;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Add Task Section */
 .add-task-section {
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
 }
 
 .add-task-container {
@@ -330,7 +244,7 @@ body {
 .tasks-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-xl);
+    gap: var(--spacing-lg);
 }
 
 /* Task Section */
@@ -390,7 +304,7 @@ body {
 }
 
 .task-card.completed {
-    opacity: 0.7;
+    opacity: 0.6;
 }
 
 .task-card.completed .task-title {
@@ -509,115 +423,101 @@ body {
     margin: 0;
 }
 
-/* Modal */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal.active {
+/* Analytics */
+.analytics-container {
     display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
 }
 
-.modal-content {
+.analytics-controls {
     background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
     border-radius: var(--radius-lg);
-    padding: 0;
-    max-width: 700px;
-    width: 90%;
-    max-height: 80vh;
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    animation: modalSlideIn var(--transition-normal) ease-out;
-}
-
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: var(--spacing-lg);
-    border-bottom: 1px solid var(--border-primary);
 }
 
-.modal-header h2 {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0;
+.filter-buttons {
+    display: flex;
+    gap: var(--spacing-xs);
+    background-color: var(--bg-tertiary);
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-md);
+    width: fit-content;
 }
 
-.modal-close {
+.filter-btn {
     background: none;
     border: none;
-    cursor: pointer;
-    padding: var(--spacing-sm);
+    color: var(--text-secondary);
+    padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    transition: all var(--transition-fast);
-}
-
-.modal-close:hover {
-    background-color: var(--bg-hover);
-    color: var(--text-primary);
-}
-
-.modal-body {
-    padding: var(--spacing-lg);
-    max-height: 60vh;
-    overflow-y: auto;
-}
-
-/* History Dates */
-.history-dates {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: var(--spacing-md);
-}
-
-.history-date-card {
-    background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-md);
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
     transition: all var(--transition-fast);
 }
 
-.history-date-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--accent-primary);
-}
-
-.history-date-title {
-    font-size: 16px;
-    font-weight: 600;
+.filter-btn:hover {
     color: var(--text-primary);
-    margin-bottom: var(--spacing-xs);
 }
 
-.history-date-stats {
+.filter-btn.active {
+    background-color: var(--accent-primary);
+    color: var(--text-inverse);
+}
+
+.analytics-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.stat-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+}
+
+.stat-label {
     font-size: 14px;
     color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.chart-container {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+}
+
+.chart-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+.chart {
+    width: 100%;
+    height: 400px;
+    position: relative;
+}
+
+#chartCanvas {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
 }
 
 /* Animations */
@@ -671,18 +571,9 @@ body {
         align-items: stretch;
     }
     
-    .header-right {
-        justify-content: space-between;
-    }
-    
-    .progress-cards {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-md);
-    }
-    
     .tasks-container {
         grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
+        gap: var(--spacing-md);
     }
     
     .input-group {
@@ -695,22 +586,18 @@ body {
         justify-content: center;
     }
     
-    .history-dates {
+    .analytics-stats {
         grid-template-columns: 1fr;
+        gap: var(--spacing-md);
     }
     
-    .progress-card {
-        padding: var(--spacing-md);
+    .filter-buttons {
+        width: 100%;
+        justify-content: center;
     }
     
-    .progress-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
-    }
-    
-    .progress-number {
-        font-size: 28px;
+    .chart {
+        height: 300px;
     }
 }
 
@@ -727,14 +614,9 @@ body {
         font-size: 20px;
     }
     
-    .streak-badge {
-        font-size: 12px;
-        padding: var(--spacing-xs) var(--spacing-sm);
-    }
-    
-    .history-btn {
-        padding: var(--spacing-xs) var(--spacing-sm);
-        font-size: 12px;
+    .nav-tabs {
+        width: 100%;
+        justify-content: center;
     }
     
     .task-section {
@@ -742,18 +624,8 @@ body {
         min-height: 300px;
     }
     
-    .progress-card {
-        padding: var(--spacing-sm);
-    }
-    
-    .progress-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-    }
-    
-    .progress-number {
-        font-size: 24px;
+    .chart {
+        height: 250px;
     }
 }
 

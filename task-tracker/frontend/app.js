@@ -1,25 +1,21 @@
-// ===== DAILY TASK TRACKER - PREMIUM DASHBOARD =====
+// ===== DAILY TASK TRACKER - ANALYTICS DASHBOARD =====
 
 // Application State
 let tasks = {};
 let todayDate = '';
 let taskIdCounter = 1;
-let currentStreak = 0;
+let currentView = 'tasks';
+let currentPeriod = 'daily';
 let editingTaskId = null;
 
 // DOM Elements
 const elements = {
     // Header
     currentDate: document.getElementById('currentDate'),
-    streakCount: document.getElementById('streakCount'),
-    historyBtn: document.getElementById('historyBtn'),
     
-    // Progress
-    totalTasks: document.getElementById('totalTasks'),
-    completedTasks: document.getElementById('completedTasks'),
-    pendingTasks: document.getElementById('pendingTasks'),
-    progressFill: document.getElementById('progressFill'),
-    progressPercentage: document.getElementById('progressPercentage'),
+    // Navigation
+    tabBtns: document.querySelectorAll('.tab-btn'),
+    views: document.querySelectorAll('.view'),
     
     // Task Input
     taskInput: document.getElementById('taskInput'),
@@ -29,14 +25,12 @@ const elements = {
     activeTasks: document.getElementById('activeTasks'),
     completedTasks: document.getElementById('completedTasks'),
     
-    // Modals
-    historyModal: document.getElementById('historyModal'),
-    taskModal: document.getElementById('taskModal'),
-    closeHistoryBtn: document.getElementById('closeHistoryBtn'),
-    closeTaskBtn: document.getElementById('closeTaskBtn'),
-    modalTitle: document.getElementById('modalTitle'),
-    modalTasks: document.getElementById('modalTasks'),
-    historyDates: document.getElementById('historyDates')
+    // Analytics
+    filterBtns: document.querySelectorAll('.filter-btn'),
+    totalCompleted: document.getElementById('totalCompleted'),
+    avgPerDay: document.getElementById('avgPerDay'),
+    productiveDays: document.getElementById('productiveDays'),
+    chartCanvas: document.getElementById('chartCanvas')
 };
 
 // Initialize Application
@@ -46,9 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get today's date
     todayDate = getTodayDate();
     
-    // Load all data from localStorage
+    // Load data from localStorage
     loadTasks();
-    loadStreak();
     
     // Setup event listeners
     setupEventListeners();
@@ -56,8 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update UI
     updateDateDisplay();
     renderTasks();
-    updateProgress();
-    updateStreakDisplay();
     
     // Focus on input
     elements.taskInput.focus();
@@ -107,32 +98,6 @@ function saveTasks() {
     }
 }
 
-// Load Streak from localStorage
-function loadStreak() {
-    try {
-        const savedStreak = localStorage.getItem('taskStreak');
-        if (savedStreak) {
-            currentStreak = parseInt(savedStreak);
-            console.log('Streak loaded:', currentStreak);
-        } else {
-            currentStreak = 0;
-        }
-    } catch (error) {
-        console.error('Error loading streak:', error);
-        currentStreak = 0;
-    }
-}
-
-// Save Streak to localStorage
-function saveStreak() {
-    try {
-        localStorage.setItem('taskStreak', currentStreak.toString());
-        console.log('Streak saved:', currentStreak);
-    } catch (error) {
-        console.error('Error saving streak:', error);
-    }
-}
-
 // Get Today's Tasks
 function getTodayTasks() {
     return tasks[todayDate] || [];
@@ -176,7 +141,6 @@ function addTask() {
     
     // Update UI
     renderTasks();
-    updateProgress();
     
     console.log('Task added:', newTask);
 }
@@ -188,14 +152,13 @@ function toggleTask(taskId) {
     
     // Toggle completion status
     task.completed = !task.completed;
+    task.updated_at = new Date().toISOString();
     
     // Save to localStorage
     saveTasks();
     
     // Update UI
     renderTasks();
-    updateProgress();
-    updateStreak();
     
     console.log('Task toggled:', task);
 }
@@ -277,86 +240,10 @@ function deleteTask(taskId) {
             
             // Update UI
             renderTasks();
-            updateProgress();
-            updateStreak();
         }, 300);
     }
     
     console.log('Task deleted:', taskId);
-}
-
-// ===== STREAK FUNCTIONS =====
-
-// Handle Streak Logic
-function handleStreak() {
-    const todayTasks = getTodayTasks();
-    const hasCompletedTasks = todayTasks.some(task => task.completed);
-    
-    if (hasCompletedTasks) {
-        // Check if yesterday had completed tasks
-        const yesterday = new Date(todayDate);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
-        const yesterdayTasks = tasks[yesterdayStr] || [];
-        const yesterdayHadCompleted = yesterdayTasks.some(task => task.completed);
-        
-        if (yesterdayHadCompleted) {
-            // Continue streak
-            currentStreak++;
-        } else {
-            // Start new streak
-            currentStreak = 1;
-        }
-    } else {
-        // No completed tasks today, reset streak
-        currentStreak = 0;
-    }
-    
-    saveStreak();
-    updateStreakDisplay();
-}
-
-// Update Streak Display
-function updateStreakDisplay() {
-    elements.streakCount.textContent = currentStreak;
-    
-    // Add animation for streak changes
-    elements.streakBadge.style.animation = 'pulse 0.5s ease-out';
-    setTimeout(() => {
-        elements.streakBadge.style.animation = '';
-    }, 500);
-}
-
-// ===== PROGRESS FUNCTIONS =====
-
-// Calculate Progress
-function calculateProgress() {
-    const todayTasks = getTodayTasks();
-    const totalTasks = todayTasks.length;
-    const completedTasks = todayTasks.filter(task => task.completed).length;
-    const pendingTasks = totalTasks - completedTasks;
-    const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-    
-    return {
-        total: totalTasks,
-        completed: completedTasks,
-        pending: pendingTasks,
-        percentage: percentage
-    };
-}
-
-// Update Progress Display
-function updateProgress() {
-    const progress = calculateProgress();
-    
-    // Update stat cards
-    elements.totalTasks.textContent = progress.total;
-    elements.completedTasks.textContent = progress.completed;
-    elements.pendingTasks.textContent = progress.pending;
-    
-    // Update progress bar
-    elements.progressFill.style.width = progress.percentage + '%';
-    elements.progressPercentage.textContent = progress.percentage + '%';
 }
 
 // ===== RENDER FUNCTIONS =====
@@ -419,6 +306,142 @@ function createTaskCard(task) {
     `;
 }
 
+// ===== ANALYTICS FUNCTIONS =====
+
+// Calculate Analytics
+function calculateAnalytics(period) {
+    const dates = Object.keys(tasks).sort();
+    const today = new Date();
+    let startDate = new Date();
+    
+    // Set start date based on period
+    switch (period) {
+        case 'daily':
+            startDate.setDate(today.getDate() - 1);
+            break;
+        case 'weekly':
+            startDate.setDate(today.getDate() - 7);
+            break;
+        case 'monthly':
+            startDate.setDate(today.getDate() - 30);
+            break;
+    }
+    
+    // Filter dates within period
+    const filteredDates = dates.filter(date => {
+        const taskDate = new Date(date);
+        return taskDate >= startDate && taskDate <= today;
+    });
+    
+    // Calculate analytics
+    let totalCompleted = 0;
+    let productiveDays = 0;
+    const dailyData = [];
+    
+    filteredDates.forEach(date => {
+        const dayTasks = tasks[date] || [];
+        const completedCount = dayTasks.filter(task => task.completed).length;
+        
+        totalCompleted += completedCount;
+        if (completedCount > 0) productiveDays++;
+        
+        dailyData.push({
+            date: date,
+            completed: completedCount,
+            label: formatDate(date)
+        });
+    });
+    
+    const avgPerDay = filteredDates.length > 0 ? Math.round(totalCompleted / filteredDates.length) : 0;
+    
+    return {
+        totalCompleted,
+        avgPerDay,
+        productiveDays,
+        dailyData
+    };
+}
+
+// Render Analytics
+function renderAnalytics() {
+    const analytics = calculateAnalytics(currentPeriod);
+    
+    // Update stats
+    elements.totalCompleted.textContent = analytics.totalCompleted;
+    elements.avgPerDay.textContent = analytics.avgPerDay;
+    elements.productiveDays.textContent = analytics.productiveDays;
+    
+    // Render chart
+    renderChart(analytics.dailyData);
+}
+
+// Render Chart
+function renderChart(data) {
+    const canvas = elements.chartCanvas;
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    if (data.length === 0) {
+        // Draw empty state
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '16px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data available', canvas.width / 2, canvas.height / 2);
+        return;
+    }
+    
+    // Calculate dimensions
+    const padding = 40;
+    const chartWidth = canvas.width - padding * 2;
+    const chartHeight = canvas.height - padding * 2;
+    const barWidth = chartWidth / data.length * 0.8;
+    const barSpacing = chartWidth / data.length * 0.2;
+    const maxValue = Math.max(...data.map(d => d.completed));
+    
+    // Draw axes
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(padding, padding);
+    ctx.lineTo(padding, canvas.height - padding);
+    ctx.lineTo(canvas.width - padding, canvas.height - padding);
+    ctx.stroke();
+    
+    // Draw bars
+    data.forEach((item, index) => {
+        const barHeight = (item.completed / maxValue) * chartHeight;
+        const x = padding + (index * (barWidth + barSpacing)) + barSpacing / 2;
+        const y = canvas.height - padding - barHeight;
+        
+        // Draw bar
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(x, y, barWidth, barHeight);
+        
+        // Draw value on top
+        ctx.fillStyle = '#f1f5f9';
+        ctx.font = '12px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.completed, x + barWidth / 2, y - 5);
+        
+        // Draw label
+        ctx.save();
+        ctx.translate(x + barWidth / 2, canvas.height - padding + 15);
+        ctx.rotate(-Math.PI / 4);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px Inter';
+        ctx.textAlign = 'right';
+        ctx.fillText(item.label, 0, 0);
+        ctx.restore();
+    });
+}
+
 // ===== UI FUNCTIONS =====
 
 // Update Date Display
@@ -429,95 +452,79 @@ function updateDateDisplay() {
     elements.currentDate.textContent = dateStr;
 }
 
-// Show History Modal
-function showHistory() {
-    renderHistory();
-    elements.historyModal.classList.add('active');
-}
-
-// Close History Modal
-function closeHistory() {
-    elements.historyModal.classList.remove('active');
-}
-
-// Show Task Detail Modal
-function showDateTasks(date) {
-    const dateTasks = tasks[date] || [];
-    const formattedDate = formatDate(date);
+// Show View
+function showView(viewName) {
+    // Update navigation
+    elements.tabBtns.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.view === viewName) {
+            btn.classList.add('active');
+        }
+    });
     
-    // Update modal title
-    elements.modalTitle.textContent = `Tasks for ${formattedDate}`;
+    // Update views
+    elements.views.forEach(view => {
+        view.classList.add('hidden');
+    });
+    document.getElementById(viewName + 'View').classList.remove('hidden');
     
-    // Render tasks in modal
-    if (dateTasks.length === 0) {
-        elements.modalTasks.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-clipboard"></i>
-                <p>No tasks for this day</p>
-            </div>
-        `;
-    } else {
-        elements.modalTasks.innerHTML = dateTasks.map(task => createTaskCard(task)).join('');
+    // Update current view
+    currentView = viewName;
+    
+    // Render analytics if switching to analytics view
+    if (viewName === 'analytics') {
+        renderAnalytics();
     }
     
-    // Show modal
-    elements.taskModal.classList.add('active');
-}
-
-// Close Task Modal
-function closeTaskModal() {
-    elements.taskModal.classList.remove('active');
-}
-
-// Render History
-function renderHistory() {
-    const dates = Object.keys(tasks).sort().reverse(); // Most recent first
-    
-    if (dates.length === 0) {
-        elements.historyDates.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-history"></i>
-                <p>No previous days found</p>
-            </div>
-        `;
-        return;
+    // Focus appropriate input
+    if (viewName === 'tasks') {
+        elements.taskInput.focus();
     }
+}
+
+// Set Period
+function setPeriod(period) {
+    currentPeriod = period;
     
-    const historyHTML = dates.map(date => {
-        const dateTasks = tasks[date];
-        const completedCount = dateTasks.filter(task => task.completed).length;
-        const totalCount = dateTasks.length;
-        
-        // Skip today in history (it's shown in main view)
-        if (date === todayDate) return '';
-        
-        return `
-            <div class="history-date-card" onclick="showDateTasks('${date}')">
-                <div class="history-date-title">${formatDate(date)}</div>
-                <div class="history-date-stats">
-                    ${completedCount} of ${totalCount} completed
-                </div>
-            </div>
-        `;
-    }).filter(html => html !== '').join('');
+    // Update filter buttons
+    elements.filterBtns.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.period === period) {
+            btn.classList.add('active');
+        }
+    });
     
-    if (historyHTML === '') {
-        elements.historyDates.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-history"></i>
-                <p>No previous days found</p>
-            </div>
-        `;
-    } else {
-        elements.historyDates.innerHTML = historyHTML;
+    // Re-render analytics
+    if (currentView === 'analytics') {
+        renderAnalytics();
     }
 }
 
 // ===== EVENT LISTENERS =====
 
 function setupEventListeners() {
+    // Navigation tabs
+    elements.tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            showView(btn.dataset.view);
+        });
+    });
+    
+    // Filter buttons
+    elements.filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            setPeriod(btn.dataset.period);
+        });
+    });
+    
     // Add task button
-    elements.addTaskBtn.addEventListener('click', addTask);
+    elements.addTaskBtn.addEventListener('click', () => {
+        if (editingTaskId) {
+            updateTask();
+        } else {
+            addTask();
+        }
+    });
     
     // Task input
     elements.taskInput.addEventListener('keypress', (e) => {
@@ -532,28 +539,15 @@ function setupEventListeners() {
     
     elements.taskInput.addEventListener('input', validateInput);
     
-    // History button
-    elements.historyBtn.addEventListener('click', showHistory);
-    
-    // Modal close buttons
-    elements.closeHistoryBtn.addEventListener('click', closeHistory);
-    elements.closeTaskBtn.addEventListener('click', closeTaskModal);
-    
-    // Modal background clicks
-    elements.historyModal.addEventListener('click', (e) => {
-        if (e.target === elements.historyModal) {
-            closeHistory();
-        }
-    });
-    
-    elements.taskModal.addEventListener('click', (e) => {
-        if (e.target === elements.taskModal) {
-            closeTaskModal();
-        }
-    });
-    
     // Check for date change (midnight reset)
     setInterval(checkDateChange, 60000); // Check every minute
+    
+    // Handle window resize for chart
+    window.addEventListener('resize', () => {
+        if (currentView === 'analytics') {
+            renderAnalytics();
+        }
+    });
     
     console.log('Event listeners setup complete');
 }
@@ -582,8 +576,6 @@ function checkDateChange() {
         // Update UI for new day
         updateDateDisplay();
         renderTasks();
-        updateProgress();
-        updateStreak();
         
         console.log('Date changed, new day:', todayDate);
     }
@@ -604,10 +596,8 @@ function formatDate(dateStr) {
         return 'Yesterday';
     } else {
         return date.toLocaleDateString('en-US', { 
-            weekday: 'short',
             month: 'short', 
-            day: 'numeric',
-            year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+            day: 'numeric'
         });
     }
 }
@@ -627,29 +617,18 @@ function shakeElement(element) {
     }, 300);
 }
 
-// Add animations
-const animationsStyle = document.createElement('style');
-animationsStyle.textContent = `
+// Add shake animation
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `
     @keyframes shake {
         0%, 100% { transform: translateX(0); }
         25% { transform: translateX(-5px); }
         75% { transform: translateX(5px); }
     }
-    
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); }
-    }
 `;
-document.head.appendChild(animationsStyle);
+document.head.appendChild(shakeStyle);
 
 // Make functions globally available
-window.showDateTasks = showDateTasks;
-
-// Auto-update streak when tasks are toggled
-const originalToggleTask = toggleTask;
-toggleTask = function(taskId) {
-    originalToggleTask(taskId);
-    handleStreak();
-};
+window.toggleTask = toggleTask;
+window.editTask = editTask;
+window.deleteTask = deleteTask;
