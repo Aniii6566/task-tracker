@@ -1,4 +1,4 @@
-// ===== DAILY TASK TRACKER - IMPROVED WITH STREAK SYSTEM =====
+// ===== DAILY TASK TRACKER - COMPLETED TASKS UI FIX =====
 
 // Application State
 let tasks = {};
@@ -371,7 +371,7 @@ function renderTasks() {
     elements.activeTasks.innerHTML = '';
     elements.completedTasks.innerHTML = '';
     
-    // Render active tasks ONLY in "Today's Tasks"
+    // Render active tasks ONLY in "Today's Tasks" with interactive checkboxes
     if (activeTasks.length === 0) {
         elements.activeTasks.innerHTML = `
             <div class="empty-state">
@@ -380,10 +380,10 @@ function renderTasks() {
             </div>
         `;
     } else {
-        elements.activeTasks.innerHTML = activeTasks.map(task => createTaskCard(task)).join('');
+        elements.activeTasks.innerHTML = activeTasks.map(task => createActiveTaskCard(task)).join('');
     }
     
-    // Render completed tasks ONLY in "Completed Tasks"
+    // Render completed tasks ONLY in "Completed Tasks" with static check icons
     if (completedTasks.length === 0) {
         elements.completedTasks.innerHTML = `
             <div class="empty-state">
@@ -392,16 +392,16 @@ function renderTasks() {
             </div>
         `;
     } else {
-        elements.completedTasks.innerHTML = completedTasks.map(task => createTaskCard(task)).join('');
+        elements.completedTasks.innerHTML = completedTasks.map(task => createCompletedTaskCard(task)).join('');
     }
 }
 
-// Create Task Card
-function createTaskCard(task) {
+// Create Active Task Card - WITH INTERACTIVE CHECKBOX
+function createActiveTaskCard(task) {
     return `
-        <div class="task-card ${task.completed ? 'completed' : ''}" data-task-id="${task.id}">
+        <div class="task-card" data-task-id="${task.id}">
             <div class="task-content">
-                <div class="task-checkbox ${task.completed ? 'checked' : ''}" 
+                <div class="task-checkbox" 
                      onclick="toggleTask(${task.id})"></div>
                 <div class="task-title">${escapeHtml(task.title)}</div>
             </div>
@@ -411,8 +411,36 @@ function createTaskCard(task) {
                     <i class="fas fa-edit"></i>
                 </button>
                 <button class="task-btn complete-btn" onclick="toggleTask(${task.id})" 
-                        title="${task.completed ? 'Mark incomplete' : 'Mark complete'}">
-                    <i class="fas fa-${task.completed ? 'undo' : 'check'}"></i>
+                        title="Mark complete">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button class="task-btn delete-btn" onclick="deleteTask(${task.id})" 
+                        title="Delete task">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Create Completed Task Card - WITH STATIC CHECK ICON
+function createCompletedTaskCard(task) {
+    return `
+        <div class="task-card completed" data-task-id="${task.id}">
+            <div class="task-content">
+                <div class="task-completed-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="task-title">${escapeHtml(task.title)}</div>
+            </div>
+            <div class="task-actions">
+                <button class="task-btn edit-btn" onclick="editTask(${task.id})" 
+                        title="Edit task">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="task-btn complete-btn" onclick="toggleTask(${task.id})" 
+                        title="Mark incomplete">
+                    <i class="fas fa-undo"></i>
                 </button>
                 <button class="task-btn delete-btn" onclick="deleteTask(${task.id})" 
                         title="Delete task">
