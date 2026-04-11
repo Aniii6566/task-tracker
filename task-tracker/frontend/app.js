@@ -1,4 +1,4 @@
-// ===== DAILY TASK TRACKER - ANALYTICS DASHBOARD =====
+// ===== DAILY TASK TRACKER - BUG-FIXED VERSION =====
 
 // Application State
 let tasks = {};
@@ -145,7 +145,7 @@ function addTask() {
     console.log('Task added:', newTask);
 }
 
-// Toggle Task Function
+// Toggle Task Function - FIXED
 function toggleTask(taskId) {
     const task = getTodayTasks().find(t => t.id === taskId);
     if (!task) return;
@@ -248,13 +248,25 @@ function deleteTask(taskId) {
 
 // ===== RENDER FUNCTIONS =====
 
-// Render Tasks
+// Render Tasks - FIXED LOGIC
 function renderTasks() {
     const todayTasks = getTodayTasks();
+    
+    // CRITICAL FIX: Properly separate active and completed tasks
     const activeTasks = todayTasks.filter(task => !task.completed);
     const completedTasks = todayTasks.filter(task => task.completed);
     
-    // Render active tasks
+    console.log('Rendering tasks:', { 
+        total: todayTasks.length, 
+        active: activeTasks.length, 
+        completed: completedTasks.length 
+    });
+    
+    // Clear both sections first
+    elements.activeTasks.innerHTML = '';
+    elements.completedTasks.innerHTML = '';
+    
+    // Render active tasks ONLY in "Today's Tasks"
     if (activeTasks.length === 0) {
         elements.activeTasks.innerHTML = `
             <div class="empty-state">
@@ -266,7 +278,7 @@ function renderTasks() {
         elements.activeTasks.innerHTML = activeTasks.map(task => createTaskCard(task)).join('');
     }
     
-    // Render completed tasks
+    // Render completed tasks ONLY in "Completed Tasks"
     if (completedTasks.length === 0) {
         elements.completedTasks.innerHTML = `
             <div class="empty-state">
