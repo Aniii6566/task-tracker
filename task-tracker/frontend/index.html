@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Tracker - Daily Dashboard</title>
+    <title>Daily Task Tracker - Premium Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,155 +11,78 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <i class="fas fa-rocket"></i>
-                    <span>Task Tracker</span>
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="app-title">📋 Daily Tracker</h1>
+                    <div class="current-date" id="currentDate">Loading...</div>
+                </div>
+                <div class="header-right">
+                    <div class="streak-badge" id="streakBadge">
+                        <i class="fas fa-fire"></i>
+                        <span id="streakCount">0</span>
+                    </div>
+                    <button class="history-btn" id="historyBtn">
+                        <i class="fas fa-history"></i>
+                        History
+                    </button>
                 </div>
             </div>
-            
-            <nav class="sidebar-nav">
-                <button class="nav-item active" data-view="dashboard">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </button>
-                <button class="nav-item" data-view="tasks">
-                    <i class="fas fa-tasks"></i>
-                    <span>Today's Tasks</span>
-                </button>
-                <button class="nav-item" data-view="history">
-                    <i class="fas fa-history"></i>
-                    <span>History</span>
-                </button>
-            </nav>
-            
-            <div class="sidebar-footer">
-                <div class="stats-summary">
-                    <div class="stat-item">
-                        <span class="stat-label">Today</span>
-                        <span class="stat-value" id="todayTotal">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Completed</span>
-                        <span class="stat-value" id="todayCompleted">0</span>
-                    </div>
-                </div>
-            </div>
-        </aside>
+        </header>
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Dashboard View -->
-            <div class="view" id="dashboardView">
-                <header class="content-header">
-                    <div class="header-left">
-                        <h1 class="page-title">Dashboard</h1>
-                        <p class="greeting" id="greeting">Good morning! Let's make today productive.</p>
-                    </div>
-                    <div class="header-right">
-                        <div class="date-display" id="currentDate"></div>
-                    </div>
-                </header>
-
-                <div class="dashboard-grid">
-                    <!-- Quick Stats -->
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-calendar-day"></i>
+            <!-- Progress Section -->
+            <section class="progress-section">
+                <div class="progress-cards">
+                    <div class="progress-card">
+                        <div class="progress-icon total">
+                            <i class="fas fa-tasks"></i>
                         </div>
-                        <div class="stat-info">
-                            <h3>Today's Tasks</h3>
-                            <p class="stat-number" id="dashboardTodayCount">0</p>
+                        <div class="progress-info">
+                            <h3>Total Tasks</h3>
+                            <span class="progress-number" id="totalTasks">0</span>
                         </div>
                     </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon">
+                    <div class="progress-card">
+                        <div class="progress-icon completed">
                             <i class="fas fa-check-circle"></i>
                         </div>
-                        <div class="stat-info">
+                        <div class="progress-info">
                             <h3>Completed</h3>
-                            <p class="stat-number" id="dashboardCompletedCount">0</p>
+                            <span class="progress-number" id="completedTasks">0</span>
                         </div>
                     </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-percentage"></i>
+                    <div class="progress-card">
+                        <div class="progress-icon pending">
+                            <i class="fas fa-clock"></i>
                         </div>
-                        <div class="stat-info">
-                            <h3>Progress</h3>
-                            <p class="stat-number" id="dashboardProgress">0%</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Progress Section -->
-                <div class="progress-section">
-                    <h2>Today's Progress</h2>
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progressFill"></div>
-                        </div>
-                        <div class="progress-text" id="progressText">0 of 0 tasks completed</div>
-                    </div>
-                </div>
-
-                <!-- Quick Add Section -->
-                <div class="quick-add-section">
-                    <h2>Quick Add Task</h2>
-                    <div class="quick-add-form">
-                        <input 
-                            type="text" 
-                            id="quickTaskInput" 
-                            class="quick-input" 
-                            placeholder="What needs to be done today?"
-                            autocomplete="off"
-                        >
-                        <button id="quickAddBtn" class="quick-add-btn">
-                            <i class="fas fa-plus"></i>
-                            Add Task
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Recent Tasks Preview -->
-                <div class="recent-tasks">
-                    <h2>Today's Tasks</h2>
-                    <div class="task-list" id="recentTasksList">
-                        <div class="empty-state">
-                            <i class="fas fa-rocket"></i>
-                            <p>No tasks for today 🚀</p>
+                        <div class="progress-info">
+                            <h3>Pending</h3>
+                            <span class="progress-number" id="pendingTasks">0</span>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Tasks View -->
-            <div class="view hidden" id="tasksView">
-                <header class="content-header">
-                    <div class="header-left">
-                        <h1 class="page-title">Today's Tasks</h1>
-                        <p class="date-info" id="tasksDateInfo"></p>
+                
+                <!-- Progress Bar -->
+                <div class="progress-bar-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
                     </div>
-                    <div class="header-right">
-                        <button class="btn-secondary" onclick="showView('dashboard')">
-                            <i class="fas fa-arrow-left"></i>
-                            Back to Dashboard
-                        </button>
-                    </div>
-                </header>
+                    <div class="progress-percentage" id="progressPercentage">0%</div>
+                </div>
+            </section>
 
-                <!-- Add Task Section -->
-                <div class="add-task-section">
-                    <div class="add-task-form">
+            <!-- Add Task Section -->
+            <section class="add-task-section">
+                <div class="add-task-container">
+                    <div class="input-group">
                         <input 
                             type="text" 
                             id="taskInput" 
                             class="task-input" 
-                            placeholder="Add a new task..."
+                            placeholder="What needs to be done today?"
                             autocomplete="off"
                         >
                         <button id="addTaskBtn" class="add-btn">
@@ -168,55 +91,54 @@
                         </button>
                     </div>
                 </div>
+            </section>
 
-                <!-- Tasks Grid -->
-                <div class="tasks-grid">
-                    <!-- Active Tasks -->
-                    <div class="task-section">
+            <!-- Tasks Container -->
+            <div class="tasks-container">
+                <!-- Active Tasks -->
+                <section class="task-section">
+                    <div class="section-header">
                         <h2 class="section-title">
                             <i class="fas fa-fire"></i>
-                            Active Tasks
+                            Today's Tasks
                         </h2>
-                        <div class="task-list" id="activeTasks">
-                            <div class="empty-state">
-                                <i class="fas fa-clipboard-list"></i>
-                                <p>No active tasks</p>
-                            </div>
+                    </div>
+                    <div class="task-list" id="activeTasks">
+                        <div class="empty-state">
+                            <i class="fas fa-rocket"></i>
+                            <p>No tasks today 🚀</p>
                         </div>
                     </div>
+                </section>
 
-                    <!-- Completed Tasks -->
-                    <div class="task-section">
+                <!-- Completed Tasks -->
+                <section class="task-section">
+                    <div class="section-header">
                         <h2 class="section-title">
                             <i class="fas fa-check-circle"></i>
                             Completed Tasks
                         </h2>
-                        <div class="task-list" id="completedTasks">
-                            <div class="empty-state">
-                                <i class="fas fa-clipboard-check"></i>
-                                <p>No completed tasks yet</p>
-                            </div>
+                    </div>
+                    <div class="task-list" id="completedTasks">
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-check"></i>
+                            <p>No completed tasks yet</p>
                         </div>
                     </div>
-                </div>
+                </section>
             </div>
+        </main>
 
-            <!-- History View -->
-            <div class="view hidden" id="historyView">
-                <header class="content-header">
-                    <div class="header-left">
-                        <h1 class="page-title">History</h1>
-                        <p>View your previous days' tasks</p>
-                    </div>
-                    <div class="header-right">
-                        <button class="btn-secondary" onclick="showView('dashboard')">
-                            <i class="fas fa-arrow-left"></i>
-                            Back to Dashboard
-                        </button>
-                    </div>
-                </header>
-
-                <div class="history-content">
+        <!-- History Modal -->
+        <div class="modal" id="historyModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📚 Task History</h2>
+                    <button class="modal-close" id="closeHistoryBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
                     <div class="history-dates" id="historyDates">
                         <div class="empty-state">
                             <i class="fas fa-history"></i>
@@ -225,21 +147,21 @@
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
 
-    <!-- Task Detail Modal -->
-    <div class="modal" id="taskModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle">Tasks for</h2>
-                <button class="modal-close" onclick="closeModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="task-list" id="modalTasks">
-                    <!-- Tasks will be loaded here -->
+        <!-- Task Detail Modal -->
+        <div class="modal" id="taskModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Tasks for</h2>
+                    <button class="modal-close" id="closeTaskBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="task-list" id="modalTasks">
+                        <!-- Tasks will be loaded here -->
+                    </div>
                 </div>
             </div>
         </div>

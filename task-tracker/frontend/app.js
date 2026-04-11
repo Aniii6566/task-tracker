@@ -2,48 +2,41 @@
 
 // Application State
 let tasks = {};
-let currentView = 'dashboard';
 let todayDate = '';
 let taskIdCounter = 1;
+let currentStreak = 0;
+let editingTaskId = null;
 
 // DOM Elements
 const elements = {
-    // Navigation
-    navItems: document.querySelectorAll('.nav-item'),
-    views: document.querySelectorAll('.view'),
-    
-    // Dashboard
+    // Header
     currentDate: document.getElementById('currentDate'),
-    greeting: document.getElementById('greeting'),
-    dashboardTodayCount: document.getElementById('dashboardTodayCount'),
-    dashboardCompletedCount: document.getElementById('dashboardCompletedCount'),
-    dashboardProgress: document.getElementById('dashboardProgress'),
+    streakCount: document.getElementById('streakCount'),
+    historyBtn: document.getElementById('historyBtn'),
+    
+    // Progress
+    totalTasks: document.getElementById('totalTasks'),
+    completedTasks: document.getElementById('completedTasks'),
+    pendingTasks: document.getElementById('pendingTasks'),
     progressFill: document.getElementById('progressFill'),
-    progressText: document.getElementById('progressText'),
-    recentTasksList: document.getElementById('recentTasksList'),
+    progressPercentage: document.getElementById('progressPercentage'),
     
-    // Quick Add
-    quickTaskInput: document.getElementById('quickTaskInput'),
-    quickAddBtn: document.getElementById('quickAddBtn'),
-    
-    // Tasks View
-    tasksDateInfo: document.getElementById('tasksDateInfo'),
+    // Task Input
     taskInput: document.getElementById('taskInput'),
     addTaskBtn: document.getElementById('addTaskBtn'),
+    
+    // Task Lists
     activeTasks: document.getElementById('activeTasks'),
     completedTasks: document.getElementById('completedTasks'),
     
-    // History
-    historyDates: document.getElementById('historyDates'),
-    
-    // Sidebar Stats
-    todayTotal: document.getElementById('todayTotal'),
-    todayCompleted: document.getElementById('todayCompleted'),
-    
-    // Modal
+    // Modals
+    historyModal: document.getElementById('historyModal'),
     taskModal: document.getElementById('taskModal'),
+    closeHistoryBtn: document.getElementById('closeHistoryBtn'),
+    closeTaskBtn: document.getElementById('closeTaskBtn'),
     modalTitle: document.getElementById('modalTitle'),
-    modalTasks: document.getElementById('modalTasks')
+    modalTasks: document.getElementById('modalTasks'),
+    historyDates: document.getElementById('historyDates')
 };
 
 // Initialize Application
@@ -53,23 +46,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get today's date
     todayDate = getTodayDate();
     
-    // Load all tasks from localStorage
+    // Load all data from localStorage
     loadTasks();
+    loadStreak();
     
     // Setup event listeners
     setupEventListeners();
     
     // Update UI
     updateDateDisplay();
-    updateGreeting();
-    renderCurrentView();
+    renderTasks();
+    updateProgress();
+    updateStreakDisplay();
     
-    // Focus on appropriate input
-    if (currentView === 'dashboard') {
-        elements.quickTaskInput.focus();
-    } else if (currentView === 'tasks') {
-        elements.taskInput.focus();
-    }
+    // Focus on input
+    elements.taskInput.focus();
     
     console.log('Application initialized successfully');
 });
@@ -116,6 +107,32 @@ function saveTasks() {
     }
 }
 
+// Load Streak from localStorage
+function loadStreak() {
+    try {
+        const savedStreak = localStorage.getItem('taskStreak');
+        if (savedStreak) {
+            currentStreak = parseInt(savedStreak);
+            console.log('Streak loaded:', currentStreak);
+        } else {
+            currentStreak = 0;
+        }
+    } catch (error) {
+        console.error('Error loading streak:', error);
+        currentStreak = 0;
+    }
+}
+
+// Save Streak to localStorage
+function saveStreak() {
+    try {
+        localStorage.setItem('taskStreak', currentStreak.toString());
+        console.log('Streak saved:', currentStreak);
+    } catch (error) {
+        console.error('Error saving streak:', error);
+    }
+}
+
 // Get Today's Tasks
 function getTodayTasks() {
     return tasks[todayDate] || [];
@@ -124,53 +141,49 @@ function getTodayTasks() {
 // ===== TASK FUNCTIONS =====
 
 // Add Task Function
-function addTask(title, date = todayDate) {
+function addTask() {
+    const title = elements.taskInput.value.trim();
+    
     // Validate input
-    if (!title || title.trim() === '') {
-        shakeElement(date === todayDate ? elements.quickTaskInput : elements.taskInput);
+    if (title === '') {
+        shakeElement(elements.taskInput);
         return;
     }
     
-    // Initialize tasks for date if not exists
-    if (!tasks[date]) {
-        tasks[date] = [];
+    // Initialize tasks for today if not exists
+    if (!tasks[todayDate]) {
+        tasks[todayDate] = [];
     }
     
     // Create new task
     const newTask = {
-        id: date === todayDate ? taskIdCounter++ : Date.now(),
-        title: title.trim(),
+        id: taskIdCounter++,
+        title: title,
         completed: false,
         created_at: new Date().toISOString()
     };
     
-    // Add to tasks for that date
-    tasks[date].unshift(newTask);
+    // Add to tasks for today
+    tasks[todayDate].unshift(newTask);
     
     // Save to localStorage
     saveTasks();
     
     // Clear input and reset validation
-    if (date === todayDate) {
-        elements.quickTaskInput.value = '';
-        elements.taskInput.value = '';
-        validateQuickInput();
-        validateTaskInput();
-        elements.quickTaskInput.focus();
-    }
+    elements.taskInput.value = '';
+    validateInput();
+    elements.taskInput.focus();
     
     // Update UI
-    renderCurrentView();
-    updateStats();
+    renderTasks();
+    updateProgress();
     
     console.log('Task added:', newTask);
 }
 
 // Toggle Task Function
-function toggleTask(taskId, date = todayDate) {
-    if (!tasks[date]) return;
-    
-    const task = tasks[date].find(t => t.id === taskId);
+function toggleTask(taskId) {
+    const task = getTodayTasks().find(t => t.id === taskId);
     if (!task) return;
     
     // Toggle completion status
@@ -180,17 +193,67 @@ function toggleTask(taskId, date = todayDate) {
     saveTasks();
     
     // Update UI
-    renderCurrentView();
-    updateStats();
+    renderTasks();
+    updateProgress();
+    updateStreak();
     
     console.log('Task toggled:', task);
 }
 
-// Delete Task Function
-function deleteTask(taskId, date = todayDate) {
-    if (!tasks[date]) return;
+// Edit Task Function
+function editTask(taskId) {
+    const task = getTodayTasks().find(t => t.id === taskId);
+    if (!task) return;
     
-    const taskIndex = tasks[date].findIndex(t => t.id === taskId);
+    // Set input value to task title
+    elements.taskInput.value = task.title;
+    elements.taskInput.focus();
+    
+    // Mark as editing
+    editingTaskId = taskId;
+    elements.addTaskBtn.innerHTML = '<i class="fas fa-save"></i> Update Task';
+    elements.addTaskBtn.onclick = updateTask;
+    
+    console.log('Editing task:', task);
+}
+
+// Update Task Function
+function updateTask() {
+    const title = elements.taskInput.value.trim();
+    
+    // Validate input
+    if (title === '') {
+        shakeElement(elements.taskInput);
+        return;
+    }
+    
+    const task = getTodayTasks().find(t => t.id === editingTaskId);
+    if (!task) return;
+    
+    // Update task title
+    task.title = title;
+    task.updated_at = new Date().toISOString();
+    
+    // Save to localStorage
+    saveTasks();
+    
+    // Reset editing state
+    editingTaskId = null;
+    elements.taskInput.value = '';
+    elements.addTaskBtn.innerHTML = '<i class="fas fa-plus"></i> Add Task';
+    elements.addTaskBtn.onclick = addTask;
+    validateInput();
+    elements.taskInput.focus();
+    
+    // Update UI
+    renderTasks();
+    
+    console.log('Task updated:', task);
+}
+
+// Delete Task Function
+function deleteTask(taskId) {
+    const taskIndex = getTodayTasks().findIndex(t => t.id === taskId);
     if (taskIndex === -1) return;
     
     const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
@@ -202,91 +265,118 @@ function deleteTask(taskId, date = todayDate) {
         // Remove after animation
         setTimeout(() => {
             // Remove from array
-            tasks[date].splice(taskIndex, 1);
+            tasks[todayDate].splice(taskIndex, 1);
             
             // Clean up empty date arrays
-            if (tasks[date].length === 0) {
-                delete tasks[date];
+            if (tasks[todayDate].length === 0) {
+                delete tasks[todayDate];
             }
             
             // Save to localStorage
             saveTasks();
             
             // Update UI
-            renderCurrentView();
-            updateStats();
+            renderTasks();
+            updateProgress();
+            updateStreak();
         }, 300);
     }
     
     console.log('Task deleted:', taskId);
 }
 
-// ===== RENDER FUNCTIONS =====
+// ===== STREAK FUNCTIONS =====
 
-// Render Current View
-function renderCurrentView() {
-    switch (currentView) {
-        case 'dashboard':
-            renderDashboard();
-            break;
-        case 'tasks':
-            renderTasksView();
-            break;
-        case 'history':
-            renderHistoryView();
-            break;
+// Handle Streak Logic
+function handleStreak() {
+    const todayTasks = getTodayTasks();
+    const hasCompletedTasks = todayTasks.some(task => task.completed);
+    
+    if (hasCompletedTasks) {
+        // Check if yesterday had completed tasks
+        const yesterday = new Date(todayDate);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        const yesterdayTasks = tasks[yesterdayStr] || [];
+        const yesterdayHadCompleted = yesterdayTasks.some(task => task.completed);
+        
+        if (yesterdayHadCompleted) {
+            // Continue streak
+            currentStreak++;
+        } else {
+            // Start new streak
+            currentStreak = 1;
+        }
+    } else {
+        // No completed tasks today, reset streak
+        currentStreak = 0;
     }
+    
+    saveStreak();
+    updateStreakDisplay();
 }
 
-// Render Dashboard
-function renderDashboard() {
-    const todayTasks = getTodayTasks();
-    const activeTasks = todayTasks.filter(task => !task.completed);
-    const completedTasks = todayTasks.filter(task => task.completed);
+// Update Streak Display
+function updateStreakDisplay() {
+    elements.streakCount.textContent = currentStreak;
     
-    // Update stats
-    elements.dashboardTodayCount.textContent = todayTasks.length;
-    elements.dashboardCompletedCount.textContent = completedTasks.length;
-    const progress = todayTasks.length > 0 ? Math.round((completedTasks.length / todayTasks.length) * 100) : 0;
-    elements.dashboardProgress.textContent = progress + '%';
+    // Add animation for streak changes
+    elements.streakBadge.style.animation = 'pulse 0.5s ease-out';
+    setTimeout(() => {
+        elements.streakBadge.style.animation = '';
+    }, 500);
+}
+
+// ===== PROGRESS FUNCTIONS =====
+
+// Calculate Progress
+function calculateProgress() {
+    const todayTasks = getTodayTasks();
+    const totalTasks = todayTasks.length;
+    const completedTasks = todayTasks.filter(task => task.completed).length;
+    const pendingTasks = totalTasks - completedTasks;
+    const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    
+    return {
+        total: totalTasks,
+        completed: completedTasks,
+        pending: pendingTasks,
+        percentage: percentage
+    };
+}
+
+// Update Progress Display
+function updateProgress() {
+    const progress = calculateProgress();
+    
+    // Update stat cards
+    elements.totalTasks.textContent = progress.total;
+    elements.completedTasks.textContent = progress.completed;
+    elements.pendingTasks.textContent = progress.pending;
     
     // Update progress bar
-    elements.progressFill.style.width = progress + '%';
-    elements.progressText.textContent = `${completedTasks.length} of ${todayTasks.length} tasks completed`;
-    
-    // Render recent tasks
-    if (activeTasks.length === 0) {
-        elements.recentTasksList.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-rocket"></i>
-                <p>No tasks for today 🚀</p>
-            </div>
-        `;
-    } else {
-        elements.recentTasksList.innerHTML = activeTasks.slice(0, 5).map(task => createTaskCard(task, todayDate)).join('');
-    }
+    elements.progressFill.style.width = progress.percentage + '%';
+    elements.progressPercentage.textContent = progress.percentage + '%';
 }
 
-// Render Tasks View
-function renderTasksView() {
+// ===== RENDER FUNCTIONS =====
+
+// Render Tasks
+function renderTasks() {
     const todayTasks = getTodayTasks();
     const activeTasks = todayTasks.filter(task => !task.completed);
     const completedTasks = todayTasks.filter(task => task.completed);
-    
-    // Update date info
-    const formattedDate = formatDate(todayDate);
-    elements.tasksDateInfo.textContent = formattedDate;
     
     // Render active tasks
     if (activeTasks.length === 0) {
         elements.activeTasks.innerHTML = `
             <div class="empty-state">
-                <i class="fas fa-clipboard-list"></i>
-                <p>No active tasks</p>
+                <i class="fas fa-rocket"></i>
+                <p>No tasks today 🚀</p>
             </div>
         `;
     } else {
-        elements.activeTasks.innerHTML = activeTasks.map(task => createTaskCard(task, todayDate)).join('');
+        elements.activeTasks.innerHTML = activeTasks.map(task => createTaskCard(task)).join('');
     }
     
     // Render completed tasks
@@ -298,12 +388,89 @@ function renderTasksView() {
             </div>
         `;
     } else {
-        elements.completedTasks.innerHTML = completedTasks.map(task => createTaskCard(task, todayDate)).join('');
+        elements.completedTasks.innerHTML = completedTasks.map(task => createTaskCard(task)).join('');
     }
 }
 
-// Render History View
-function renderHistoryView() {
+// Create Task Card
+function createTaskCard(task) {
+    return `
+        <div class="task-card ${task.completed ? 'completed' : ''}" data-task-id="${task.id}">
+            <div class="task-content">
+                <div class="task-checkbox ${task.completed ? 'checked' : ''}" 
+                     onclick="toggleTask(${task.id})"></div>
+                <div class="task-title">${escapeHtml(task.title)}</div>
+            </div>
+            <div class="task-actions">
+                <button class="task-btn edit-btn" onclick="editTask(${task.id})" 
+                        title="Edit task">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="task-btn complete-btn" onclick="toggleTask(${task.id})" 
+                        title="${task.completed ? 'Mark incomplete' : 'Mark complete'}">
+                    <i class="fas fa-${task.completed ? 'undo' : 'check'}"></i>
+                </button>
+                <button class="task-btn delete-btn" onclick="deleteTask(${task.id})" 
+                        title="Delete task">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// ===== UI FUNCTIONS =====
+
+// Update Date Display
+function updateDateDisplay() {
+    const date = new Date(todayDate);
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateStr = date.toLocaleDateString('en-US', options);
+    elements.currentDate.textContent = dateStr;
+}
+
+// Show History Modal
+function showHistory() {
+    renderHistory();
+    elements.historyModal.classList.add('active');
+}
+
+// Close History Modal
+function closeHistory() {
+    elements.historyModal.classList.remove('active');
+}
+
+// Show Task Detail Modal
+function showDateTasks(date) {
+    const dateTasks = tasks[date] || [];
+    const formattedDate = formatDate(date);
+    
+    // Update modal title
+    elements.modalTitle.textContent = `Tasks for ${formattedDate}`;
+    
+    // Render tasks in modal
+    if (dateTasks.length === 0) {
+        elements.modalTasks.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-clipboard"></i>
+                <p>No tasks for this day</p>
+            </div>
+        `;
+    } else {
+        elements.modalTasks.innerHTML = dateTasks.map(task => createTaskCard(task)).join('');
+    }
+    
+    // Show modal
+    elements.taskModal.classList.add('active');
+}
+
+// Close Task Modal
+function closeTaskModal() {
+    elements.taskModal.classList.remove('active');
+}
+
+// Render History
+function renderHistory() {
     const dates = Object.keys(tasks).sort().reverse(); // Most recent first
     
     if (dates.length === 0) {
@@ -321,7 +488,7 @@ function renderHistoryView() {
         const completedCount = dateTasks.filter(task => task.completed).length;
         const totalCount = dateTasks.length;
         
-        // Skip today in history (it's shown in dashboard)
+        // Skip today in history (it's shown in main view)
         if (date === todayDate) return '';
         
         return `
@@ -346,163 +513,42 @@ function renderHistoryView() {
     }
 }
 
-// Create Task Card
-function createTaskCard(task, date) {
-    return `
-        <div class="task-card ${task.completed ? 'completed' : ''}" data-task-id="${task.id}">
-            <div class="task-content">
-                <div class="task-checkbox ${task.completed ? 'checked' : ''}" 
-                     onclick="toggleTask(${task.id}, '${date}')"></div>
-                <div class="task-title">${escapeHtml(task.title)}</div>
-            </div>
-            <div class="task-actions">
-                <button class="task-btn complete-btn" onclick="toggleTask(${task.id}, '${date}')" 
-                        title="${task.completed ? 'Mark incomplete' : 'Mark complete'}">
-                    <i class="fas fa-${task.completed ? 'undo' : 'check'}"></i>
-                </button>
-                <button class="task-btn delete-btn" onclick="deleteTask(${task.id}, '${date}')" 
-                        title="Delete task">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-// ===== UI FUNCTIONS =====
-
-// Update Date Display
-function updateDateDisplay() {
-    const date = new Date(todayDate);
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const dateStr = date.toLocaleDateString('en-US', options);
-    elements.currentDate.textContent = dateStr;
-}
-
-// Update Greeting
-function updateGreeting() {
-    const hour = new Date().getHours();
-    let greeting;
-    
-    if (hour < 12) {
-        greeting = 'Good morning! Let\'s make today productive.';
-    } else if (hour < 17) {
-        greeting = 'Good afternoon! Keep up the great work.';
-    } else {
-        greeting = 'Good evening! Time to wrap up today\'s tasks.';
-    }
-    
-    elements.greeting.textContent = greeting;
-}
-
-// Update Stats
-function updateStats() {
-    const todayTasks = getTodayTasks();
-    const completedTasks = todayTasks.filter(task => task.completed);
-    
-    elements.todayTotal.textContent = todayTasks.length;
-    elements.todayCompleted.textContent = completedTasks.length;
-}
-
-// Show View
-function showView(viewName) {
-    // Update navigation
-    elements.navItems.forEach(item => {
-        item.classList.remove('active');
-        if (item.dataset.view === viewName) {
-            item.classList.add('active');
-        }
-    });
-    
-    // Update views
-    elements.views.forEach(view => {
-        view.classList.add('hidden');
-    });
-    document.getElementById(viewName + 'View').classList.remove('hidden');
-    
-    // Update current view
-    currentView = viewName;
-    
-    // Render the new view
-    renderCurrentView();
-    
-    // Focus appropriate input
-    if (viewName === 'dashboard') {
-        elements.quickTaskInput.focus();
-    } else if (viewName === 'tasks') {
-        elements.taskInput.focus();
-    }
-}
-
-// Show Date Tasks (Modal)
-function showDateTasks(date) {
-    const dateTasks = tasks[date] || [];
-    const formattedDate = formatDate(date);
-    
-    // Update modal title
-    elements.modalTitle.textContent = `Tasks for ${formattedDate}`;
-    
-    // Render tasks in modal
-    if (dateTasks.length === 0) {
-        elements.modalTasks.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-clipboard"></i>
-                <p>No tasks for this day</p>
-            </div>
-        `;
-    } else {
-        elements.modalTasks.innerHTML = dateTasks.map(task => createTaskCard(task, date)).join('');
-    }
-    
-    // Show modal
-    elements.taskModal.classList.add('active');
-}
-
-// Close Modal
-function closeModal() {
-    elements.taskModal.classList.remove('active');
-}
-
 // ===== EVENT LISTENERS =====
 
 function setupEventListeners() {
-    // Navigation
-    elements.navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            showView(item.dataset.view);
-        });
-    });
+    // Add task button
+    elements.addTaskBtn.addEventListener('click', addTask);
     
-    // Quick Add
-    elements.quickAddBtn.addEventListener('click', () => {
-        addTask(elements.quickTaskInput.value);
-    });
-    
-    elements.quickTaskInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            addTask(elements.quickTaskInput.value);
-        }
-    });
-    
-    elements.quickTaskInput.addEventListener('input', validateQuickInput);
-    
-    // Task Add
-    elements.addTaskBtn.addEventListener('click', () => {
-        addTask(elements.taskInput.value);
-    });
-    
+    // Task input
     elements.taskInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            addTask(elements.taskInput.value);
+            if (editingTaskId) {
+                updateTask();
+            } else {
+                addTask();
+            }
         }
     });
     
-    elements.taskInput.addEventListener('input', validateTaskInput);
+    elements.taskInput.addEventListener('input', validateInput);
     
-    // Modal close on background click
+    // History button
+    elements.historyBtn.addEventListener('click', showHistory);
+    
+    // Modal close buttons
+    elements.closeHistoryBtn.addEventListener('click', closeHistory);
+    elements.closeTaskBtn.addEventListener('click', closeTaskModal);
+    
+    // Modal background clicks
+    elements.historyModal.addEventListener('click', (e) => {
+        if (e.target === elements.historyModal) {
+            closeHistory();
+        }
+    });
+    
     elements.taskModal.addEventListener('click', (e) => {
         if (e.target === elements.taskModal) {
-            closeModal();
+            closeTaskModal();
         }
     });
     
@@ -513,14 +559,17 @@ function setupEventListeners() {
 }
 
 // Input Validation
-function validateQuickInput() {
-    const hasValue = elements.quickTaskInput.value.trim().length > 0;
-    elements.quickAddBtn.disabled = !hasValue;
-}
-
-function validateTaskInput() {
+function validateInput() {
     const hasValue = elements.taskInput.value.trim().length > 0;
     elements.addTaskBtn.disabled = !hasValue;
+    
+    if (hasValue) {
+        elements.addTaskBtn.style.opacity = '1';
+        elements.addTaskBtn.style.cursor = 'pointer';
+    } else {
+        elements.addTaskBtn.style.opacity = '0.5';
+        elements.addTaskBtn.style.cursor = 'not-allowed';
+    }
 }
 
 // Check for Date Change
@@ -532,9 +581,9 @@ function checkDateChange() {
         
         // Update UI for new day
         updateDateDisplay();
-        updateGreeting();
-        renderCurrentView();
-        updateStats();
+        renderTasks();
+        updateProgress();
+        updateStreak();
         
         console.log('Date changed, new day:', todayDate);
     }
@@ -578,20 +627,29 @@ function shakeElement(element) {
     }, 300);
 }
 
-// Add shake animation
-const shakeStyle = document.createElement('style');
-shakeStyle.textContent = `
+// Add animations
+const animationsStyle = document.createElement('style');
+animationsStyle.textContent = `
     @keyframes shake {
         0%, 100% { transform: translateX(0); }
         25% { transform: translateX(-5px); }
         75% { transform: translateX(5px); }
     }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
 `;
-document.head.appendChild(shakeStyle);
+document.head.appendChild(animationsStyle);
 
 // Make functions globally available
-window.showView = showView;
-window.toggleTask = toggleTask;
-window.deleteTask = deleteTask;
 window.showDateTasks = showDateTasks;
-window.closeModal = closeModal;
+
+// Auto-update streak when tasks are toggled
+const originalToggleTask = toggleTask;
+toggleTask = function(taskId) {
+    originalToggleTask(taskId);
+    handleStreak();
+};
